@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="auth/coursetransit/db"
+       VERSION="2026012901"
+       COMMENT="CourseTransit LMS tables"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
+
+  <TABLES>
+
+    <!-- WordPress Sites -->
+    <TABLE NAME="auth_coursetransit_sites" COMMENT="Registered WordPress sites">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="name" TYPE="char" LENGTH="100" NOTNULL="true"/>
+        <FIELD NAME="domain" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="token" TYPE="char" LENGTH="128" NOTNULL="true"/>
+        <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="domain_unique" TYPE="unique" FIELDS="domain"/>
+      </KEYS>
+    </TABLE>
+
+    <!-- Site → Allowed services -->
+    <TABLE NAME="auth_coursetransit_site_services" COMMENT="Allowed services per site">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="siteid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="functionname" TYPE="char" LENGTH="255" NOTNULL="true"/>
+      </FIELDS>
+
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="site_service_unique" TYPE="unique" FIELDS="siteid,functionname"/>
+      </KEYS>
+    </TABLE>
+
+    <!-- API Logs -->
+    <TABLE NAME="auth_coursetransit_api_logs" COMMENT="API call logs">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="siteid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="functionname" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="status" TYPE="char" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="message" TYPE="text" NOTNULL="false"/>
+        <FIELD NAME="origin" TYPE="char" LENGTH="255" NOTNULL="false"/>
+        <FIELD NAME="ipaddress" TYPE="char" LENGTH="45" NOTNULL="false"/>
+        <FIELD NAME="executiontime" TYPE="number" LENGTH="10" DECIMALS="5" NOTNULL="false"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
+      </FIELDS>
+
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+
+      <INDEXES>
+        <INDEX NAME="siteid_idx" UNIQUE="false" FIELDS="siteid"/>
+        <INDEX NAME="function_idx" UNIQUE="false" FIELDS="functionname"/>
+        <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status"/>
+      </INDEXES>
+    </TABLE>
+
+  </TABLES>
+</XMLDB>
