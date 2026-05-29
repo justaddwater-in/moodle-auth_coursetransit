@@ -15,18 +15,20 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Cache definitions for CourseTransit.
  *
- * @package     auth_coursetransit
+ * @package    auth_coursetransit
  * @copyright  2025 Justaddwater <contact@justaddwater.in>
  * @author     Himanshu Saini
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'auth_coursetransit';
-$plugin->release = '0.1.0';
-$plugin->version = 2026052900;
-$plugin->requires = 2022041900;
-$plugin->maturity = MATURITY_ALPHA;
+$definitions = [
+    'session' => [
+        'mode' => cache_store::MODE_SESSION,
+        'simplekeys' => true,
+        'simpledata' => true,
+    ],
+];

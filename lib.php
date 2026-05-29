@@ -23,6 +23,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+use cache;
 use webservice;
 /**
  * Minimal LMSACE-style webservice + token creation.
@@ -46,27 +47,57 @@ function auth_coursetransit_auto_create_webservice(): string {
     }
 
     // Get or create service.
-    $service = $DB->get_record('external_services', ['shortname' => 'auth_coursetransit']);
+    $service = $DB->get_record(
+        'external_services',
+        ['shortname' => 'auth_coursetransit']
+    );
+
     if (!$service) {
         $service = (object) [
-            'name' => 'CourseTransit LMS Service',
-            'shortname' => 'auth_coursetransit',
+            'name' => get_string(
+                'coursetransitservice',
+                'auth_coursetransit'
+            ),
+            'shortname' =>
+                'auth_coursetransit',
             'enabled' => 1,
             'restrictedusers' => 1,
             'timecreated' => time(),
         ];
-        $service->id = $DB->insert_record('external_services', $service);
+
+        $service->id =
+            $DB->insert_record(
+                'external_services',
+                $service
+            );
+    } else {
+        // Keep service updated.
+        $service->name = get_string(
+            'coursetransitservice',
+            'auth_coursetransit'
+        );
+
+        $service->enabled = 1;
+        $service->restrictedusers = 1;
+
+        $DB->update_record(
+            'external_services',
+            $service
+        );
     }
 
     // CRITICAL: Ensure ALL supported functions are enabled ONCE.
-    auth_coursetransit_update_services(
-        array_keys(auth_coursetransit_get_supported_services())
-    );
+    auth_coursetransit_update_services([
+        'auth_coursetransit_execute_action',
+    ]);
 
     // Technical user.
     $userid = (int) get_config('auth_coursetransit', 'technicaluserid');
     if (!$userid) {
-        throw new moodle_exception('Technical user not configured');
+        throw new moodle_exception(
+            'technicalusernotset',
+            'auth_coursetransit'
+        );
     }
 
     // Authorise user.
@@ -143,24 +174,24 @@ function auth_coursetransit_get_existing_token(): string {
  */
 function auth_coursetransit_get_supported_services(): array {
     return [
-        'core_webservice_get_site_info' => 'Get site info',
+        'core_webservice_get_site_info' => get_string('service_getsiteinfo', 'auth_coursetransit'),
         // User-related services.
-        'core_user_create_users' => 'Create users',
-        'core_user_delete_users' => 'Delete users',
-        'core_user_get_users_by_field' => 'Get users by field (email, id)',
-        'core_user_update_users' => 'Update users',
+        'core_user_create_users' => get_string('service_createusers', 'auth_coursetransit'),
+        'core_user_delete_users' => get_string('service_deleteusers', 'auth_coursetransit'),
+        'core_user_get_users_by_field' => get_string('service_getusersbyfield', 'auth_coursetransit'),
+        'core_user_update_users' => get_string('service_updateusers', 'auth_coursetransit'),
 
         // Course-related services.
-        'core_course_get_courses' => 'Get courses',
-        'core_course_get_courses_by_field' => 'Get courses by field',
-        'core_course_get_categories' => 'Get course categories',
-        'core_course_get_contents' => 'Get course contents',
+        'core_course_get_courses' => get_string('service_getcourses', 'auth_coursetransit'),
+        'core_course_get_courses_by_field' => get_string('service_getcoursesbyfield', 'auth_coursetransit'),
+        'core_course_get_categories' => get_string('service_getcategories', 'auth_coursetransit'),
+        'core_course_get_contents' => get_string('service_getcontents', 'auth_coursetransit'),
 
         // Enrolment-related services.
-        'core_enrol_get_users_courses' => 'Get user enrolments',
-        'core_enrol_get_enrolled_users' => 'Get enrolled users',
-        'enrol_manual_enrol_users' => 'Manually enrol users',
-        'enrol_manual_unenrol_users' => 'Manually unenrol users',
+        'core_enrol_get_users_courses' => get_string('service_getuserenrolments', 'auth_coursetransit'),
+        'core_enrol_get_enrolled_users' => get_string('service_getenrolledusers', 'auth_coursetransit'),
+        'enrol_manual_enrol_users' => get_string('service_manualenrol', 'auth_coursetransit'),
+        'enrol_manual_unenrol_users' => get_string('service_manualunenrol', 'auth_coursetransit'),
     ];
 }
 
@@ -207,8 +238,14 @@ function auth_coursetransit_update_services(array $functions): void {
         MUST_EXIST
     );
 
-    $supported = array_keys(auth_coursetransit_get_supported_services());
-    $functions = array_intersect($functions, $supported);
+    $allowed = [
+        'auth_coursetransit_execute_action',
+    ];
+
+    $functions = array_intersect(
+        $functions,
+        $allowed
+    );
 
     $DB->delete_records(
         'external_services_functions',
@@ -216,10 +253,23 @@ function auth_coursetransit_update_services(array $functions): void {
     );
 
     foreach ($functions as $fn) {
-        $DB->insert_record('external_services_functions', [
-            'externalserviceid' => $service->id,
-            'functionname' => $fn,
-        ]);
+        if (
+            !$DB->record_exists(
+                'external_functions',
+                ['name' => $fn]
+            )
+        ) {
+            continue;
+        }
+
+        $DB->insert_record(
+            'external_services_functions',
+            [
+                'externalserviceid' =>
+                    $service->id,
+                'functionname' => $fn,
+            ]
+        );
     }
 }
 
@@ -228,20 +278,24 @@ function auth_coursetransit_update_services(array $functions): void {
  *
  * @param string $name Site name.
  * @param string $domain Site domain.
- * @return string Generated token.
+ * @return void
  */
-function auth_coursetransit_create_site(string $name, string $domain): string {
+function auth_coursetransit_create_site(string $name, string $domain): void {
     global $DB;
 
-    $token = bin2hex(random_bytes(32));
     $time = time();
-
     $domain = rtrim($domain, '/');
+
+    if ($DB->record_exists('auth_coursetransit_sites', ['domain' => $domain])) {
+        throw new moodle_exception(
+            'sitedomainexists',
+            'auth_coursetransit'
+        );
+    }
 
     $siteid = $DB->insert_record('auth_coursetransit_sites', [
         'name' => $name,
         'domain' => $domain,
-        'token' => $token,
         'enabled' => 1,
         'timecreated' => $time,
         'timemodified' => $time,
@@ -249,8 +303,6 @@ function auth_coursetransit_create_site(string $name, string $domain): string {
 
     $allservices = array_keys(auth_coursetransit_get_supported_services());
     auth_coursetransit_update_site_services($siteid, $allservices);
-
-    return $token;
 }
 
 /**
@@ -270,56 +322,30 @@ function auth_coursetransit_get_sites(): array {
  * @param array $payload Request payload.
  * @return mixed
  */
-function auth_coursetransit_execute_action(string $function, array $payload) {
-    global $CFG, $DB;
+function auth_coursetransit_execute_action(
+    string $function,
+    array $payload
+) {
+    global $CFG;
 
-    require_once($CFG->dirroot . '/webservice/lib.php');
-    require_once($CFG->dirroot . '/webservice/rest/locallib.php');
+    require_once($CFG->libdir . '/externallib.php');
 
-    // 1. Fetch service
-    $service = $DB->get_record(
-        'external_services',
-        ['shortname' => 'auth_coursetransit'],
-        '*',
-        MUST_EXIST
+    $response = external_api::call_external_function(
+        $function,
+        $payload
     );
 
-    // 2. Get technical user
-    $userid = (int) get_config('auth_coursetransit', 'technicaluserid');
-    if (!$userid) {
-        throw new moodle_exception('technicalusernotset', 'auth_coursetransit');
+    if (!empty($response['error'])) {
+        throw new moodle_exception(
+            'apierror',
+            'auth_coursetransit',
+            '',
+            null,
+            $response['error']
+        );
     }
 
-    // 3. Get EXISTING token (never regenerate)
-    $token = $DB->get_record('external_tokens', [
-        'externalserviceid' => $service->id,
-        'userid' => $userid,
-    ], '*', MUST_EXIST);
-
-    // 4. Create REST server (AUTH METHOD is mandatory)
-    $server = new webservice_rest_server(WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN);
-
-    $backuppost = $_POST;
-    $backupget  = $_GET;
-
-    // 5. Simulate REST request (THIS IS THE KEY PART)
-    $_POST = array_merge([
-        'wstoken' => $token->token,
-        'wsfunction' => $function,
-        'moodlewsrestformat' => 'json',
-    ], $payload);
-
-    $_GET = []; // Safety.
-
-    ob_start();
-    $server->run();
-    $response = ob_get_clean();
-
-    // Restore original POST and GET data.
-    $_POST = $backuppost;
-    $_GET = $backupget;
-
-    return json_decode($response, true);
+    return $response['data'];
 }
 
 /**
@@ -412,4 +438,50 @@ function auth_coursetransit_log_api_call(
  */
 function auth_coursetransit_is_setup_complete(): bool {
     return (bool) get_config('auth_coursetransit', 'setup_complete');
+}
+
+/**
+ * Store temporary token in session cache.
+ *
+ * @param string $token
+ * @return void
+ */
+function auth_coursetransit_set_temp_token(
+    string $token
+): void {
+
+    $cache = \cache::make(
+        'auth_coursetransit',
+        'session'
+    );
+
+    $cache->set(
+        'coursetransit_token',
+        $token
+    );
+}
+
+/**
+ * Get temporary token from session cache.
+ *
+ * Automatically removes token after fetch.
+ *
+ * @return string
+ */
+function auth_coursetransit_get_temp_token(): string {
+
+    $cache = \cache::make(
+        'auth_coursetransit',
+        'session'
+    );
+
+    $token = $cache->get(
+        'coursetransit_token'
+    ) ?: '';
+
+    $cache->delete(
+        'coursetransit_token'
+    );
+
+    return $token;
 }
