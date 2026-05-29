@@ -26,7 +26,6 @@
                 "id": 1,
                 "name": "Test Site",
                 "domain": "example.com",
-                "token": "abc123xyz",
                 "configaction": "<a href=\"#\">Configure</a>",
                 "deleteaction": "<button>Delete</button>"
             }
@@ -46,11 +45,10 @@
         <table class="table fullwidth">
             <thead>
                 <tr>
-                    <th>Site Name</th>
-                    <th>Domain</th>
-                    <th>Token</th>
-                    <th>Settings</th>
-                    <th class="text-center">Actions</th>
+                    <th>{{#str}}sitenamecolumn, auth_coursetransit{{/str}}</th>
+                    <th>{{#str}}domaincolumn, auth_coursetransit{{/str}}</th>
+                    <th>{{#str}}settingscolumn, auth_coursetransit{{/str}}</th>
+                    <th class="text-center">{{#str}}actionscolumn, auth_coursetransit{{/str}}</th>
                 </tr>
             </thead>
             <tbody>
@@ -62,7 +60,6 @@
                             {{domain}}
                         </a>
                     </td>
-                    <td><code>{{token}}</code></td>
                     <td>
                         {{{configaction}}}
                     </td>
@@ -76,7 +73,7 @@
 
         {{^sites}}
         <div class="alert alert-info mt-3">
-            No WordPress sites registered yet.
+           {{#str}}nositesregistered, auth_coursetransit{{/str}}
         </div>
         {{/sites}}
     </div>

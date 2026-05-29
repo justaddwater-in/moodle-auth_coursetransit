@@ -24,11 +24,10 @@
  */
 
 require_once(__DIR__ . '/../../config.php');
-require_once($CFG->libdir . '/adminlib.php');
-
 require_once(__DIR__ . '/lib.php');
-require_once(__DIR__ . '/services_form.php');
 require_once(__DIR__ . '/site_form.php');
+
+require_once($CFG->libdir . '/adminlib.php');
 
 // Security.
 admin_externalpage_setup('auth_coursetransit');
@@ -36,24 +35,21 @@ admin_externalpage_setup('auth_coursetransit');
 require_login();
 require_capability('moodle/site:config', context_system::instance());
 
-global $DB, $OUTPUT, $PAGE, $SESSION;
+global $DB, $OUTPUT, $PAGE;
 
 if (!auth_coursetransit_is_setup_complete()) {
     redirect(new moodle_url('/auth/coursetransit/wizard.php'));
 }
 
 $PAGE->set_url('/auth/coursetransit/index.php');
-$PAGE->set_title('CourseTransit LMS');
-$PAGE->set_heading('CourseTransit LMS');
+$PAGE->set_title(get_string('pluginname', 'auth_coursetransit'));
+$PAGE->set_heading(get_string('pluginname', 'auth_coursetransit'));
 
 // Params.
 $action = optional_param('action', '', PARAM_ALPHA);
-$siteid = optional_param('siteid', 0, PARAM_INT);
-
 $created = optional_param('created', 0, PARAM_INT);
 
-$tokenparam = $SESSION->coursetransit_token ?? '';
-unset($SESSION->coursetransit_token);
+$tokenparam = auth_coursetransit_get_temp_token();
 
 $showmodal = ($created && !empty($tokenparam));
 
@@ -70,7 +66,7 @@ if ($action === 'delete') {
 
     redirect(
         new moodle_url('/auth/coursetransit/index.php'),
-        'Site deleted successfully',
+        get_string('sitedeleted', 'auth_coursetransit'),
         null,
         \core\output\notification::NOTIFY_SUCCESS
     );
@@ -92,7 +88,10 @@ if ($siteform && $siteform->is_submitted() && $siteform->is_validated()) {
     $host = parse_url($input, PHP_URL_HOST);
 
     if (!$host) {
-        throw new moodle_exception('Invalid site URL');
+        throw new moodle_exception(
+            'invalidsiteurl',
+            'auth_coursetransit'
+        );
     }
 
     // Normalize domain.
@@ -114,12 +113,12 @@ if ($siteform && $siteform->is_submitted() && $siteform->is_validated()) {
     }
 
     // Create site.
-    $token = auth_coursetransit_create_site(
+    auth_coursetransit_create_site(
         trim($data->name),
         $domain
     );
 
-    $SESSION->coursetransit_token = $token;
+    auth_coursetransit_set_temp_token(auth_coursetransit_get_existing_token());
     redirect(
         new moodle_url('/auth/coursetransit/index.php', [
             'created' => 1,
@@ -157,13 +156,12 @@ foreach (auth_coursetransit_get_sites() as $site) {
         '',
         null,
         ['class' => 'btn btn-link p-0'],
-        new pix_icon('i/settings', 'Configure')
+        new pix_icon('i/settings', get_string('configure', 'auth_coursetransit'))
     );
 
     $sites[] = [
         'name'         => $site->name,
         'domain'       => $site->domain,
-        'token' => substr($site->token, 0, 6) . '********************' . substr($site->token, -4),
         'configaction' => $configaction,
         'deleteaction' => $deleteaction,
     ];
@@ -186,8 +184,5 @@ if ($showmodal) {
 
 // RENDER.
 echo $OUTPUT->header();
-if (!$siteform) {
-    echo $OUTPUT->notification('Only one site is allowed currently.', 'info');
-}
 echo $OUTPUT->render_from_template('auth_coursetransit/layout', $templatecontext);
 echo $OUTPUT->footer();

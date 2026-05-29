@@ -38,7 +38,7 @@ if (get_config('auth_coursetransit', 'setup_complete') && $step !== 3) {
     redirect(new moodle_url('/auth/coursetransit/index.php'));
 }
 
-global $SESSION, $OUTPUT, $PAGE;
+global $OUTPUT, $PAGE;
 
 $PAGE->set_url('/auth/coursetransit/wizard.php', ['step' => $step]);
 $PAGE->set_title(get_string('pluginname', 'auth_coursetransit'));
@@ -49,7 +49,7 @@ echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('wizard_step', 'auth_coursetransit', $step));
 
 // STEP 1.
-if ($step == 1) {
+if ($step === 1) {
     require_once(__DIR__ . '/form.php');
 
     $form = new auth_coursetransit_token_form(
@@ -72,7 +72,7 @@ if ($step == 1) {
 }
 
 // STEP 2.
-if ($step == 2) {
+if ($step === 2) {
     require_once(__DIR__ . '/site_form.php');
 
     $form = new auth_coursetransit_site_form(
@@ -91,15 +91,17 @@ if ($step == 2) {
         $host = parse_url($input, PHP_URL_HOST);
 
         if (!$host) {
-            throw new moodle_exception('invalidurl', 'auth_coursetransit');
+            throw new moodle_exception('invalidsiteurl', 'auth_coursetransit');
         }
 
-        $token = auth_coursetransit_create_site(
+        auth_coursetransit_create_site(
             trim($data->name),
             strtolower($host)
         );
 
-        $SESSION->coursetransit_token = $token;
+        auth_coursetransit_set_temp_token(
+            auth_coursetransit_get_existing_token()
+        );
 
         redirect(new moodle_url('/auth/coursetransit/wizard.php', [
             'step' => 3,
@@ -113,13 +115,11 @@ if ($step == 2) {
 }
 
 // STEP 3.
-if ($step == 3) {
+if ($step === 3) {
     // Mark setup completed.
     set_config('setup_complete', 1, 'auth_coursetransit');
 
-    $token = $SESSION->coursetransit_token ?? '';
-
-    unset($SESSION->coursetransit_token);
+    $token = auth_coursetransit_get_temp_token();
 
     if (empty($token)) {
         throw new moodle_exception('invalidtoken', 'auth_coursetransit');
