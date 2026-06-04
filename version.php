@@ -27,6 +27,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'auth_coursetransit';
 $plugin->release = '0.1.0';
-$plugin->version = 2026052900;
+$plugin->version = 2026060400;
 $plugin->requires = 2022041900;
 $plugin->maturity = MATURITY_ALPHA;
