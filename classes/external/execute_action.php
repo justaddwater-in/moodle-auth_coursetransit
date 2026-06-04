@@ -35,6 +35,7 @@ use external_function_parameters;
 use external_single_structure;
 use external_value;
 use invalid_parameter_exception;
+use context_system;
 
 /**
  * CourseTransit external gateway service.
@@ -54,7 +55,7 @@ class execute_action extends external_api {
 
         return new external_function_parameters([
             'function' => new external_value(
-                PARAM_TEXT,
+                PARAM_ALPHANUMEXT,
                 get_string('servicefunction', 'auth_coursetransit')
             ),
             'payload' => new external_value(
@@ -88,6 +89,17 @@ class execute_action extends external_api {
                 'function' => $function,
                 'payload' => $payload,
             ]
+        );
+
+        // REQUIRED: context validation.
+        $context = context_system::instance();
+
+        self::validate_context($context);
+
+        // REQUIRED: capability check.
+        require_capability(
+            'webservice/rest:use',
+            $context
         );
 
         try {
@@ -219,10 +231,13 @@ class execute_action extends external_api {
                 microtime(true) - $starttime
             );
 
-            return [
-                'success' => true,
-                'data' => json_encode($result),
-            ];
+            return self::clean_returnvalue(
+                self::execute_returns(),
+                [
+                    'success' => true,
+                    'data' => json_encode($result),
+                ]
+            );
         } catch (\Throwable $e) {
             // Log error.
             \auth_coursetransit_log_api_call(
@@ -237,16 +252,19 @@ class execute_action extends external_api {
                 microtime(true) - $starttime
             );
 
-            return [
-                'success' => false,
-                'data' => json_encode([
-                    'error' => get_string(
-                        'apierror',
-                        'auth_coursetransit'
-                    ),
-                    'message' => $e->getMessage(),
-                ]),
-            ];
+            return self::clean_returnvalue(
+                self::execute_returns(),
+                [
+                    'success' => false,
+                    'data' => json_encode([
+                        'error' => get_string(
+                            'apierror',
+                            'auth_coursetransit'
+                        ),
+                        'message' => $e->getMessage(),
+                    ]),
+                ]
+            );
         }
     }
 
@@ -256,15 +274,21 @@ class execute_action extends external_api {
      * @return external_single_structure
      */
     public static function execute_returns(): external_single_structure {
-
         return new external_single_structure([
             'success' => new external_value(
                 PARAM_BOOL,
-                'Success'
+                get_string(
+                    'success',
+                    'auth_coursetransit'
+                )
             ),
+
             'data' => new external_value(
                 PARAM_RAW,
-                'Response JSON'
+                get_string(
+                    'responsejson',
+                    'auth_coursetransit'
+                )
             ),
         ]);
     }

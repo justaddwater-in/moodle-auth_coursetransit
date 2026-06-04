@@ -32,6 +32,7 @@ $functions = [
         'classpath' => '',
         'description' => get_string('gatewayservice', 'auth_coursetransit'),
         'type' => 'write',
+        'capabilities' => 'webservice/rest:use',
         'ajax' => false,
     ],
 ];

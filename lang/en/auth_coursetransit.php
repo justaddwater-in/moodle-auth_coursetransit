@@ -132,3 +132,6 @@ $string['gatewayservice'] = 'CourseTransit gateway service';
 $string['settingscardtitle'] = 'Authentication & Integration Platform';
 $string['tokenmodaltitle'] = 'Save Your API Token';
 $string['missingsiteurl'] = 'Missing site URL.';
+$string['success'] = 'Success';
+$string['responsejson'] = 'Response JSON';
+$string['cachedef_session'] = 'Temporary session cache';
