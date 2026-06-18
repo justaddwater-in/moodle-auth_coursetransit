@@ -36,6 +36,7 @@ require_login();
 require_capability('moodle/site:config', context_system::instance());
 
 global $DB, $OUTPUT, $PAGE;
+use auth_coursetransit\output\tabs;
 
 if (!auth_coursetransit_is_setup_complete()) {
     redirect(new moodle_url('/auth/coursetransit/wizard.php'));
@@ -184,5 +185,19 @@ if ($showmodal) {
 
 // RENDER.
 echo $OUTPUT->header();
-echo $OUTPUT->render_from_template('auth_coursetransit/layout', $templatecontext);
+
+// Tabs.
+echo $OUTPUT->render_from_template(
+    'auth_coursetransit/tabs',
+    [
+        'tabs' => tabs::get_tabs('dashboard'),
+    ]
+);
+
+// Main layout.
+echo $OUTPUT->render_from_template(
+    'auth_coursetransit/layout',
+    $templatecontext
+);
+
 echo $OUTPUT->footer();

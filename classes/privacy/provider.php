@@ -37,6 +37,14 @@ class provider implements metadata_provider {
      * @return collection The updated collection.
      */
     public static function get_metadata(collection $collection): collection {
+        $collection->add_database_table(
+            'auth_coursetransit_sites',
+            [
+                'name' => 'privacy:metadata:sitename',
+                'domain' => 'privacy:metadata:sitedomain',
+            ],
+            'privacy:metadata:sites'
+        );
 
         $collection->add_database_table(
             'auth_coursetransit_api_logs',
