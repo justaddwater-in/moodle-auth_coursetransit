@@ -1,0 +1,270 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle. If not, see <http://www.gnu.org/licenses/>.
+}}
+
+{{!
+    @template auth_coursetransit/summary
+
+    CourseTransit summary dashboard.
+
+    Example context (json):
+    {
+        "restenabled": true,
+        "webservicesenabled": true,
+        "serviceconfigured": true,
+        "technicaluserconfigured": true,
+        "tokengenerated": true,
+        "moodleurl": "https://moodle.example.com",
+        "endpoint": "https://moodle.example.com/webservice/rest/server.php",
+        "servicename": "auth_coursetransit_execute_action",
+        "token": "abc123********",
+        "totalsites": 5,
+        "activesites": 4,
+        "disabledsites": 1
+    }
+}}
+
+{{> auth_coursetransit/tabs}}
+
+<div class="row">
+
+    <!-- SYSTEM STATUS -->
+    <div class="col-lg-6 mb-4">
+
+        <div class="card border shadow-sm h-100">
+            <div class="card-body">
+
+                <h4 class="mb-4">
+                    {{#str}}systemstatus, auth_coursetransit{{/str}}
+                </h4>
+
+                <table class="table table-borderless table-sm mb-0">
+
+                    <tr>
+                        <td>
+                            {{#str}}restprotocol, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            {{#restenabled}}
+                                <span class="badge badge-success">
+                                    {{#str}}enabled, auth_coursetransit{{/str}}
+                                </span>
+                            {{/restenabled}}
+
+                            {{^restenabled}}
+                                <span class="badge badge-danger">
+                                    {{#str}}disabled, auth_coursetransit{{/str}}
+                                </span>
+                            {{/restenabled}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}enablewebservices, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            {{#webservicesenabled}}
+                                <span class="badge badge-success">
+                                    {{#str}}enabled, auth_coursetransit{{/str}}
+                                </span>
+                            {{/webservicesenabled}}
+
+                            {{^webservicesenabled}}
+                                <span class="badge badge-danger">
+                                    {{#str}}disabled, auth_coursetransit{{/str}}
+                                </span>
+                            {{/webservicesenabled}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}coursetransitservice, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            {{#serviceconfigured}}
+                                <span class="badge badge-success">
+                                    {{#str}}configured, auth_coursetransit{{/str}}
+                                </span>
+                            {{/serviceconfigured}}
+
+                            {{^serviceconfigured}}
+                                <span class="badge badge-danger">
+                                    {{#str}}missing, auth_coursetransit{{/str}}
+                                </span>
+                            {{/serviceconfigured}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}technicaluser, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            {{#technicaluserconfigured}}
+                                <span class="badge badge-success">
+                                    {{#str}}configured, auth_coursetransit{{/str}}
+                                </span>
+                            {{/technicaluserconfigured}}
+
+                            {{^technicaluserconfigured}}
+                                <span class="badge badge-danger">
+                                    {{#str}}missing, auth_coursetransit{{/str}}
+                                </span>
+                            {{/technicaluserconfigured}}
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}token, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            {{#tokengenerated}}
+                                <span class="badge badge-success">
+                                    {{#str}}generated, auth_coursetransit{{/str}}
+                                </span>
+                            {{/tokengenerated}}
+
+                            {{^tokengenerated}}
+                                <span class="badge badge-danger">
+                                    {{#str}}missing, auth_coursetransit{{/str}}
+                                </span>
+                            {{/tokengenerated}}
+                        </td>
+                    </tr>
+
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CONNECTION DETAILS -->
+    <div class="col-lg-6 mb-4">
+
+        <div class="card border shadow-sm h-100">
+            <div class="card-body">
+
+                <h4 class="mb-4">
+                    {{#str}}connectiondetails, auth_coursetransit{{/str}}
+                </h4>
+
+                <table class="table table-borderless table-sm mb-0">
+
+                    <tr>
+                        <td>
+                            {{#str}}moodleurl, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            <small>{{moodleurl}}</small>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}restendpoint, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            <code>{{endpoint}}</code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}functionname, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            <code>{{servicename}}</code>
+                        </td>
+                    </tr>
+
+                    <tr>
+                        <td>
+                            {{#str}}accesstoken, auth_coursetransit{{/str}}
+                        </td>
+
+                        <td class="text-right">
+                            <code>{{token}}</code>
+                        </td>
+                    </tr>
+
+                </table>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- WEBSITE STATS -->
+    <div class="col-12">
+
+        <div class="card border shadow-sm">
+            <div class="card-body">
+
+                <h4 class="mb-4">
+                    {{#str}}websitestatistics, auth_coursetransit{{/str}}
+                </h4>
+
+                <div class="row text-center">
+                    <div class="col-md-4 mb-3 border-right">
+                        <h2 class="mb-1">
+                            {{totalsites}}{{^totalsites}}0{{/totalsites}}
+                        </h2>
+
+                        <small class="text-muted">
+                            {{#str}}totalwebsites, auth_coursetransit{{/str}}
+                        </small>
+                    </div>
+
+                    <div class="col-md-4 mb-3 border-right">
+                        <h2 class="mb-1 text-success">
+                            {{activesites}}{{^activesites}}0{{/activesites}}
+                        </h2>
+
+                        <small class="text-muted">
+                            {{#str}}activewebsites, auth_coursetransit{{/str}}
+                        </small>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <h2 class="mb-1 text-danger">
+                            {{disabledsites}}{{^disabledsites}}0{{/disabledsites}}
+                        </h2>
+
+                        <small class="text-muted">
+                            {{#str}}disabledwebsites, auth_coursetransit{{/str}}
+                        </small>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>

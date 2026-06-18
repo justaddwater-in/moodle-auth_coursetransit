@@ -40,38 +40,38 @@
 }}
 
 <div class="auth-coursetransit-settings-card">
-
     <div class="card border-0 shadow-sm">
 
         <div class="card-body p-4">
 
-            <div class="small text-uppercase font-weight-bold text-primary mb-2">
+            <h5 class="mb-2">
                 {{#str}}settingscardtitle, auth_coursetransit{{/str}}
-            </div>
+            </h5>
 
-            <p class="text-muted mb-4"
-               style="line-height: 1.8;">
+            <p class="text-muted mb-4">
                 {{description}}
             </p>
 
             {{#setupincomplete}}
 
-                <div class="alert alert-warning mb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="alert alert-warning mb-0">
 
-                    <div class="pr-md-3">
+                    <div class="d-flex justify-content-between align-items-center">
 
-                        <strong>{{setupwarningtitle}}</strong>
+                        <div>
 
-                        <div class="mt-1">
-                            {{setupwarningdesc}}
+                            <div class="font-weight-bold mb-1">
+                                {{setupwarningtitle}}
+                            </div>
+
+                            <div>
+                                {{setupwarningdesc}}
+                            </div>
+
                         </div>
 
-                    </div>
-
-                    <div class="mt-3 mt-md-0">
-
                         <a href="{{wizardurl}}"
-                        class="btn btn-warning font-weight-bold">
+                        class="btn btn-primary text-white">
 
                             {{wizardbutton}}
 
@@ -85,22 +85,24 @@
 
             {{#setupcomplete}}
 
-                <div class="alert alert-success mb-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <div class="alert alert-success mb-0">
 
-                    <div class="pr-md-3">
+                    <div class="d-flex justify-content-between align-items-center">
 
-                        <strong>{{setupcompletetitle}}</strong>
+                        <div>
 
-                        <div class="mt-1">
-                            {{setupcompletedesc}}
+                            <div class="font-weight-bold mb-1">
+                                {{setupcompletetitle}}
+                            </div>
+
+                            <div>
+                                {{setupcompletedesc}}
+                            </div>
+
                         </div>
 
-                    </div>
-
-                    <div class="mt-3 mt-md-0">
-
                         <a href="{{dashboardurl}}"
-                        class="btn btn-success font-weight-bold">
+                        class="btn btn-primary text-white">
 
                             {{dashboardbutton}}
 
@@ -113,7 +115,5 @@
             {{/setupcomplete}}
 
         </div>
-
     </div>
-
 </div>

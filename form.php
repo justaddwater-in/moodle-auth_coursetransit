@@ -35,6 +35,14 @@ class auth_coursetransit_token_form extends moodleform {
     public function definition() {
         $mform = $this->_form;
 
+        $mform->addElement(
+            'html',
+            html_writer::div(
+                get_string('apiuserinfodesc', 'auth_coursetransit'),
+                'text-muted mb-4'
+            )
+        );
+
         // Technical user selector.
         $admins  = get_admins();
         $options = [];

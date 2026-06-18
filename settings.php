@@ -26,6 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/lib.php');
+
 if ($hassiteconfig) {
     // Add under Authentication section.
     $ADMIN->add('authsettings', new admin_externalpage(
@@ -34,60 +35,13 @@ if ($hassiteconfig) {
         new moodle_url('/auth/coursetransit/index.php')
     ));
 
-    // Settings page content.
-
-    if ($ADMIN->fulltree) {
-        global $OUTPUT;
-
-        $templatecontext = [
-            'description' => get_string('settingscarddesc', 'auth_coursetransit'),
-
-            'dashboardbutton' => get_string('opendashboard', 'auth_coursetransit'),
-
-            'wizardbutton' => get_string('launchsetupwizard', 'auth_coursetransit'),
-
-            'dashboardurl' => (
-                new moodle_url('/auth/coursetransit/index.php')
-            )->out(false),
-
-            'wizardurl' => (
-                new moodle_url('/auth/coursetransit/wizard.php')
-            )->out(false),
-
-            'setupcomplete' => auth_coursetransit_is_setup_complete(),
-
-            'setupincomplete' => !auth_coursetransit_is_setup_complete(),
-
-            'setupwarningtitle' => get_string(
-                'setupwarningtitle',
-                'auth_coursetransit'
-            ),
-
-            'setupwarningdesc' => get_string(
-                'setupwarningdesc',
-                'auth_coursetransit'
-            ),
-
-            'setupcompletetitle' => get_string(
-                'setupcompletetitle',
-                'auth_coursetransit'
-            ),
-
-            'setupcompletedesc' => get_string(
-                'setupcompletedesc',
-                'auth_coursetransit'
-            ),
-        ];
-
-        $content = $OUTPUT->render_from_template(
-            'auth_coursetransit/settings_card',
-            $templatecontext
-        );
-
-        $settings->add(new admin_setting_heading(
-            'auth_coursetransit_heading',
-            '',
-            $content
-        ));
-    }
+    // One setting, rendered as the setup card. Moodle shows it on the
+    // post-install "New settings" review page automatically (since it
+    // has no stored value yet) and on the normal settings page every
+    // time — same markup, same code path, both places.
+    $settings->add(
+        new \auth_coursetransit\admin_setting_welcome_card(
+            'auth_coursetransit/setup_wizard_field'
+        )
+    );
 }
