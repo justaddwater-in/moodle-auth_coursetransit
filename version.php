@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'auth_coursetransit';
-$plugin->release = '0.1.0';
-$plugin->version = 2026061801;
-$plugin->requires = 2022041900;
-$plugin->maturity = MATURITY_ALPHA;
+$plugin->release = '0.2.0';
+$plugin->version = 2026080300;
+$plugin->requires = 2022112800; // Moodle 4.1.0.
+$plugin->maturity = MATURITY_BETA;

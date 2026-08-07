@@ -358,7 +358,7 @@ function auth_coursetransit_get_site_services(int $siteid): array {
     global $DB;
 
     return $DB->get_fieldset_select(
-        'auth_coursetransit_site_services',
+        'auth_coursetransit_services',
         'functionname',
         'siteid = :siteid',
         ['siteid' => $siteid]
@@ -382,12 +382,12 @@ function auth_coursetransit_update_site_services(int $siteid, array $functions):
     $functions = array_values(array_unique($functions));
 
     $DB->delete_records(
-        'auth_coursetransit_site_services',
+        'auth_coursetransit_services',
         ['siteid' => $siteid]
     );
 
     foreach ($functions as $fn) {
-        $DB->insert_record('auth_coursetransit_site_services', [
+        $DB->insert_record('auth_coursetransit_services', [
             'siteid' => $siteid,
             'functionname' => $fn,
         ]);

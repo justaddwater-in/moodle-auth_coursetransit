@@ -45,20 +45,18 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
             $table->add_field('name', XMLDB_TYPE_CHAR, '100', null, XMLDB_NOTNULL);
             $table->add_field('domain', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL);
-            $table->add_field('token', XMLDB_TYPE_CHAR, '128', null, XMLDB_NOTNULL);
             $table->add_field('enabled', XMLDB_TYPE_INTEGER, '1', null, XMLDB_NOTNULL, null, 1);
             $table->add_field('timecreated', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
             $table->add_field('timemodified', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL);
 
             $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
             $table->add_key('domain_unique', XMLDB_KEY_UNIQUE, ['domain']);
-            $table->add_index('token_idx', XMLDB_INDEX_UNIQUE, ['token']);
 
             $dbman->create_table($table);
         }
 
         // Site services table.
-        $table = new xmldb_table('auth_coursetransit_site_services');
+        $table = new xmldb_table('auth_coursetransit_services');
 
         if (!$dbman->table_exists($table)) {
             $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE);
@@ -122,6 +120,21 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
         }
 
         upgrade_plugin_savepoint(true, 2026032400, 'auth', 'coursetransit');
+    }
+
+    // RENAME auth_coursetransit_site_services -> auth_coursetransit_services.
+    // The original name is 32 characters, which exceeds the 28-character limit
+    // enforced on Moodle versions prior to 4.3. Renaming (rather than
+    // drop/recreate) preserves existing site/service assignments.
+    if ($oldversion < 2026071301) {
+        $oldtable = new xmldb_table('auth_coursetransit_site_services');
+        $newtable = new xmldb_table('auth_coursetransit_services');
+
+        if ($dbman->table_exists($oldtable) && !$dbman->table_exists($newtable)) {
+            $dbman->rename_table($oldtable, 'auth_coursetransit_services');
+        }
+
+        upgrade_plugin_savepoint(true, 2026071301, 'auth', 'coursetransit');
     }
 
     return true;

@@ -116,7 +116,7 @@ if ($step === 2) {
 
 // STEP 3.
 if ($step === 3) {
-    // Mark setup completed.
+    // Mark setup completed as soon as they reach this step.
     set_config('setup_complete', 1, 'auth_coursetransit');
 
     $token = auth_coursetransit_get_temp_token();
@@ -124,10 +124,12 @@ if ($step === 3) {
     if (empty($token)) {
         throw new moodle_exception('invalidtoken', 'auth_coursetransit');
     }
+
     $PAGE->requires->js_call_amd(
         'auth_coursetransit/token_display',
         'init'
     );
+
     echo $OUTPUT->render_from_template('auth_coursetransit/wizard/step3', [
         'title' => get_string('wizard_step_token', 'auth_coursetransit'),
         'description' => get_string('wizard_token_store', 'auth_coursetransit'),
@@ -135,8 +137,8 @@ if ($step === 3) {
         'important_label' => get_string('wizard_token_important', 'auth_coursetransit'),
         'important_text' => get_string('wizard_token_warning', 'auth_coursetransit'),
         'token' => $token,
-        'button' => get_string('gotodashboard', 'auth_coursetransit'),
-        'next' => (new moodle_url('/auth/coursetransit/index.php'))->out(false),
+        'dashboardurl' => (new moodle_url('/auth/coursetransit/index.php'))->out(false),
+        'dashboardbutton' => get_string('gotodashboard', 'auth_coursetransit'),
     ]);
 }
 

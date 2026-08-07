@@ -1,0 +1,126 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+
+{{!
+    @template auth_coursetransit/pro
+
+    CourseTransit Pro feature promotion page.
+
+    Example context (json):
+    {
+        "buy_pro_url": "https://shop.jaw91.in/product/coursetransit-pro"
+    }
+}}
+
+<div class="auth-coursetransit-pro-page my-5 px-3">
+    <div class="row align-items-center mx-auto" style="max-width: 1100px;">
+
+        <!-- Left Side: Hero Section -->
+        <div class="col-lg-5 text-left mb-5 mb-lg-0 pr-lg-5">
+            
+            <!-- Pro Badge -->
+            <span class="badge badge-pill badge-primary px-3 py-2 mb-4 text-uppercase" style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.5px;">
+                {{#str}} coursetransitpro, auth_coursetransit {{/str}}
+            </span>
+            
+            <!-- Heading -->
+            <h2 class="font-weight-bold text-dark mb-4" style="font-size: 2.75rem; line-height: 1.2; letter-spacing: -0.5px;">
+                {{#str}} unlockadvancedintegration, auth_coursetransit {{/str}}
+            </h2>
+            
+            <!-- Description -->
+            <p class="text-dark mb-4" style="font-size: 1.1rem; line-height: 1.6; font-weight: 400; max-width: 95%;">
+                {{#str}} prohero_desc, auth_coursetransit {{/str}}
+            </p>
+            
+            <!-- CTA Button -->
+            <a href="{{buy_pro_url}}" target="_blank" rel="noopener noreferrer" class="btn btn-primary px-4 py-2 mt-2 shadow-sm" style="border-radius: 50px; font-weight: 500; font-size: 1.05rem;">
+                {{#str}} upgradenow, auth_coursetransit {{/str}} <i class="fa fa-arrow-right ml-2"></i>
+            </a>
+            
+        </div>
+
+        <!-- Right Side: Features List -->
+        <div class="col-lg-7 pl-lg-5">
+            
+            <!-- Subheader -->
+            <h6 class="text-uppercase font-weight-bold text-muted mb-4" style="letter-spacing: 1px; font-size: 0.85rem;">
+                {{#str}} everythinginfreeplus, auth_coursetransit {{/str}}
+            </h6>
+            
+            <div class="row">
+                
+                <!-- Feature 1 -->
+                <div class="col-12 mb-4 d-flex text-left align-items-start">
+                    <i class="fa fa-shield text-success mt-1 mr-3 fa-fw" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <h5 class="font-weight-bold text-dark mb-1" style="font-size: 1.1rem;">{{#str}} prossotitle, auth_coursetransit {{/str}}</h5>
+                        <p class="text-muted mb-0" style="font-size: 1rem;">
+                            {{#str}} prossodesc, auth_coursetransit {{/str}}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="col-12 mb-4 d-flex text-left align-items-start">
+                    <i class="fa fa-sitemap text-primary mt-1 mr-3 fa-fw" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <h5 class="font-weight-bold text-dark mb-1" style="font-size: 1.1rem;">{{#str}} proselectivesynctitle, auth_coursetransit {{/str}}</h5>
+                        <p class="text-muted mb-0" style="font-size: 1rem;">
+                            {{#str}} proselectivesyncdesc, auth_coursetransit {{/str}}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="col-12 mb-4 d-flex text-left align-items-start">
+                    <i class="fa fa-bolt text-warning mt-1 mr-3 fa-fw" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <h5 class="font-weight-bold text-dark mb-1" style="font-size: 1.1rem;">{{#str}} proautosynctitle, auth_coursetransit {{/str}}</h5>
+                        <p class="text-muted mb-0" style="font-size: 1rem;">
+                            {{#str}} proautosyncdesc, auth_coursetransit {{/str}}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 4 -->
+                <div class="col-12 mb-4 d-flex text-left align-items-start">
+                    <i class="fa fa-headphones mt-1 mr-3 fa-fw" style="font-size: 1.25rem; color: #008080;"></i>
+                    <div>
+                        <h5 class="font-weight-bold text-dark mb-1" style="font-size: 1.1rem;">{{#str}} prodevsupporttitle, auth_coursetransit {{/str}}</h5>
+                        <p class="text-muted mb-0" style="font-size: 1rem;">
+                            {{#str}} prodevsupportdesc, auth_coursetransit {{/str}}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Feature 5 -->
+                <div class="col-12 d-flex text-left align-items-start">
+                    <i class="fa fa-rocket text-danger mt-1 mr-3 fa-fw" style="font-size: 1.25rem;"></i>
+                    <div>
+                        <h5 class="font-weight-bold text-dark mb-1" style="font-size: 1.1rem;">{{#str}} propriorityupdatestitle, auth_coursetransit {{/str}}</h5>
+                        <p class="text-muted mb-0" style="font-size: 1rem;">
+                            {{#str}} propriorityupdatesdesc, auth_coursetransit {{/str}}
+                        </p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+</div>

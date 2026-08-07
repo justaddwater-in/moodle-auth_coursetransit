@@ -198,7 +198,7 @@ class execute_action extends external_api {
             // Check service permission.
             if (
                 !$DB->record_exists(
-                    'auth_coursetransit_site_services',
+                    'auth_coursetransit_services',
                     [
                         'siteid' => $siteid,
                         'functionname' => $function,

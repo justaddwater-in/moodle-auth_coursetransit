@@ -35,4 +35,13 @@ $functions = [
         'capabilities' => 'webservice/rest:use',
         'ajax' => false,
     ],
+
+    'auth_coursetransit_send_telemetry' => [
+        'classname'     => 'auth_coursetransit\external\send_telemetry',
+        'methodname'    => 'execute',
+        'description'   => 'Sends telemetry data to ChargePanda on wizard completion.',
+        'type'          => 'write',
+        'ajax'          => true,
+        'loginrequired' => true,
+    ],
 ];

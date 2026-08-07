@@ -62,7 +62,7 @@ if ($action === 'delete') {
 
     $DB->get_record('auth_coursetransit_sites', ['id' => $id], '*', MUST_EXIST);
 
-    $DB->delete_records('auth_coursetransit_site_services', ['siteid' => $id]);
+    $DB->delete_records('auth_coursetransit_services', ['siteid' => $id]);
     $DB->delete_records('auth_coursetransit_sites', ['id' => $id]);
 
     redirect(

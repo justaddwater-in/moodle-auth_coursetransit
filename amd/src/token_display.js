@@ -14,7 +14,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * JS for token display in course transit.
+ * JS for token display handling in course transit.
  *
  * @module     auth_coursetransit/token_display
  * @copyright  2026 Justaddwater <contact@justaddwater.in>
@@ -22,29 +22,18 @@
  * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 define([], function() {
-
     return {
-
         init: function() {
+            const source = document.getElementById('coursetransit-token-source');
+            const target = document.getElementById('coursetransit-token-display');
 
-            const source = document.getElementById(
-                'coursetransit-token-source'
-            );
+            if (source && target) {
+                const token = source.dataset.token || '';
+                target.textContent = token;
 
-            const target = document.getElementById(
-                'coursetransit-token-display'
-            );
-
-            if (!source || !target) {
-                return;
+                // Remove source node after use.
+                source.remove();
             }
-
-            const token = source.dataset.token || '';
-
-            target.textContent = token;
-
-            // Remove source node after use.
-            source.remove();
         }
     };
 });
