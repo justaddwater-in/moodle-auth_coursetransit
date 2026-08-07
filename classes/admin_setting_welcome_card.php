@@ -71,13 +71,18 @@ class admin_setting_welcome_card extends \admin_setting {
      * @return string HTML.
      */
     public function output_html($data, $query = '') {
-        global $OUTPUT;
+        // ADDED $PAGE global here to inject JavaScript.
+        global $OUTPUT, $PAGE;
+
+        // Isolate the wizard URL so it can be passed to the JS module.
+        $wizardurl = (new \moodle_url('/auth/coursetransit/wizard.php'))->out(false);
+        $setupcomplete = auth_coursetransit_is_setup_complete();
 
         $context = [
             'description' => get_string('settingscarddesc', 'auth_coursetransit'),
 
             'wizardbutton' => get_string('launchsetupwizard', 'auth_coursetransit'),
-            'wizardurl' => (new \moodle_url('/auth/coursetransit/wizard.php'))->out(false),
+            'wizardurl' => $wizardurl,
             'setupwarningtitle' => get_string('setupwarningtitle', 'auth_coursetransit'),
             'setupwarningdesc' => get_string('setupwarningdesc', 'auth_coursetransit'),
 
@@ -86,9 +91,14 @@ class admin_setting_welcome_card extends \admin_setting {
             'setupcompletetitle' => get_string('setupcompletetitle', 'auth_coursetransit'),
             'setupcompletedesc' => get_string('setupcompletedesc', 'auth_coursetransit'),
 
-            'setupcomplete' => auth_coursetransit_is_setup_complete(),
-            'setupincomplete' => !auth_coursetransit_is_setup_complete(),
+            'setupcomplete' => $setupcomplete,
+            'setupincomplete' => !$setupcomplete,
         ];
+
+        // It passes the $wizardurl to the init() function of the JS module.
+        if (!$setupcomplete) {
+            $PAGE->requires->js_call_amd('auth_coursetransit/settings_telemetry', 'init', [$wizardurl]);
+        }
 
         return $OUTPUT->render_from_template('auth_coursetransit/settings_card', $context);
     }

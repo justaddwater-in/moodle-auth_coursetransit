@@ -63,6 +63,11 @@ class tabs {
                 'url' => (new \moodle_url('/auth/coursetransit/summary.php'))->out(false),
                 'active' => $current === 'summary',
             ],
+            [
+                'label' => '⚡ ' . get_string('tabpro', 'auth_coursetransit'),
+                'url' => (new \moodle_url('/auth/coursetransit/pro.php'))->out(false),
+                'active' => $current === 'pro',
+            ],
         ];
     }
 }

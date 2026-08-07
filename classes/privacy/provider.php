@@ -56,6 +56,25 @@ class provider implements metadata_provider {
             'privacy:metadata:api_logs'
         );
 
+        // Explicit opt-in only: the admin's name, email, and basic site info
+        // are sent to the external CourseTransit (ChargePanda) API solely
+        // when the administrator has ticked the consent checkbox on the
+        // final step of the setup wizard. Nothing is sent otherwise.
+        $collection->add_external_location_link(
+            'coursetransit_telemetry',
+            [
+                'first_name' => 'privacy:metadata:firstname',
+                'last_name' => 'privacy:metadata:lastname',
+                'email' => 'privacy:metadata:email',
+                'domain' => 'privacy:metadata:sitedomain',
+                'company' => 'privacy:metadata:sitename',
+                'plugin_version' => 'privacy:metadata:pluginversion',
+                'platform_version' => 'privacy:metadata:platformversion',
+                'php_version' => 'privacy:metadata:phpversion',
+            ],
+            'privacy:metadata:telemetry'
+        );
+
         return $collection;
     }
 }
