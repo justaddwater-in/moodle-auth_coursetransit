@@ -137,5 +137,146 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026071301, 'auth', 'coursetransit');
     }
 
+    // Bind each registered site to its own CourseTransit web-service token.
+    if ($oldversion < 2026081701) {
+        $table = new xmldb_table('auth_coursetransit_sites');
+
+        $field = new xmldb_field('technicaluserid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0, 'domain');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $field = new xmldb_field('tokenid', XMLDB_TYPE_INTEGER, '10', null, null, null, null, 'technicaluserid');
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        $key = new xmldb_key('token_unique', XMLDB_KEY_UNIQUE, ['tokenid']);
+        if (!$dbman->find_key_name($table, $key)) {
+            $dbman->add_key($table, $key);
+        }
+
+        // Existing installations historically used one technical user/token.
+        // Preserve that token for the oldest registered site where possible and
+        // issue unique tokens for additional sites. This keeps single-site
+        // installations working without trusting payload['siteurl'].
+        $userid = (int) get_config('auth_coursetransit', 'technicaluserid');
+        $service = $DB->get_record('external_services', ['shortname' => 'auth_coursetransit']);
+
+        if ($userid && $service) {
+            require_once($CFG->dirroot . '/webservice/lib.php');
+            require_once($CFG->libdir . '/externallib.php');
+
+            $sites = $DB->get_records('auth_coursetransit_sites', null, 'timecreated ASC, id ASC');
+            $tokens = $DB->get_records(
+                'external_tokens',
+                [
+                    'externalserviceid' => $service->id,
+                    'userid' => $userid,
+                ],
+                'id ASC',
+                'id,token'
+            );
+
+            $tokenrecords = array_values($tokens);
+            $tokenindex = 0;
+
+            foreach ($sites as $site) {
+                if (!empty($site->tokenid)) {
+                    continue;
+                }
+
+                $tokenrecord = $tokenrecords[$tokenindex] ?? null;
+                if (!$tokenrecord) {
+                    $token = external_generate_token(
+                        EXTERNAL_TOKEN_PERMANENT,
+                        $service->id,
+                        $userid,
+                        context_system::instance()
+                    );
+                    $tokenrecord = $DB->get_record(
+                        'external_tokens',
+                        ['token' => $token],
+                        'id,token',
+                        MUST_EXIST
+                    );
+                    $tokenrecords[] = $tokenrecord;
+                }
+
+                $DB->set_field('auth_coursetransit_sites', 'technicaluserid', $userid, ['id' => $site->id]);
+                $DB->set_field('auth_coursetransit_sites', 'tokenid', $tokenrecord->id, ['id' => $site->id]);
+                $tokenindex++;
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026081701, 'auth', 'coursetransit');
+    }
+
+    // Enforce token-to-site URL consistency without changing the existing
+    // WordPress request contract. The authenticated token remains the
+    // authoritative identity; payload.siteurl can only prove that the
+    // existing WordPress connection is configured for the same registered site.
+    if ($oldversion < 2026081702) {
+        // No schema change is required. This savepoint records the security
+        // behavior change for upgrades from 0.2.1.
+        upgrade_plugin_savepoint(true, 2026081702, 'auth', 'coursetransit');
+    }
+
+    // Add per-function payload validation for the generic CourseTransit proxy.
+    // No database changes are required for this security hardening.
+    if ($oldversion < 2026081703) {
+        upgrade_plugin_savepoint(true, 2026081703, 'auth', 'coursetransit');
+    }
+
+    // Clean up legacy site-services tables left behind by interrupted or
+    // older installations. This is a migration only: existing data is copied
+    // into the current table and the obsolete table is then removed.
+    if ($oldversion < 2026082400) {
+        $oldtable = new xmldb_table('auth_coursetransit_site_services');
+        $newtable = new xmldb_table('auth_coursetransit_services');
+
+        if ($dbman->table_exists($oldtable)) {
+            if (!$dbman->table_exists($newtable)) {
+                $dbman->rename_table($oldtable, 'auth_coursetransit_services');
+            } else {
+                // Both tables exist. Merge only missing mappings so an upgrade
+                // never loses existing site/service assignments.
+                $legacyrecords = $DB->get_records('auth_coursetransit_site_services');
+                foreach ($legacyrecords as $legacyrecord) {
+                    if (
+                        !$DB->record_exists(
+                            'auth_coursetransit_services',
+                            [
+                                'siteid' => $legacyrecord->siteid,
+                                'functionname' => $legacyrecord->functionname,
+                            ]
+                        )
+                    ) {
+                        $DB->insert_record(
+                            'auth_coursetransit_services',
+                            (object) [
+                                'siteid' => $legacyrecord->siteid,
+                                'functionname' => $legacyrecord->functionname,
+                            ]
+                        );
+                    }
+                }
+
+                $dbman->drop_table($oldtable);
+            }
+        }
+
+        upgrade_plugin_savepoint(true, 2026082400, 'auth', 'coursetransit');
+    }
+
+    // Create the native Moodle source-domain profile field for existing
+    // installations. This is data setup only and does not alter user records.
+    if ($oldversion < 2026083101) {
+        require_once($CFG->dirroot . '/auth/coursetransit/lib.php');
+        auth_coursetransit_ensure_source_domain_field();
+
+        upgrade_plugin_savepoint(true, 2026083101, 'auth', 'coursetransit');
+    }
+
     return true;
 }

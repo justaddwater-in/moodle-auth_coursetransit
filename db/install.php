@@ -15,18 +15,27 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Installation script for auth_coursetransit.
  *
- * @package     auth_coursetransit
- * @copyright  2025 Justaddwater <contact@justaddwater.in>
- * @author     Himanshu Saini
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package    auth_coursetransit
+ * @copyright 2025 Justaddwater
+ * @license   https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+/**
+ * Perform post-install setup for CourseTransit.
+ *
+ * Creates the native Moodle user profile field used to record the
+ * CourseTransit website that created a user.
+ *
+ * @return bool
+ */
+function xmldb_auth_coursetransit_install(): bool {
+    global $CFG;
 
-$plugin->component = 'auth_coursetransit';
-$plugin->release = '1.3.0';
-$plugin->version = 2026090201;
-$plugin->requires = 2022112800; // Moodle 4.1.0.
-$plugin->maturity = MATURITY_STABLE;
+    require_once($CFG->dirroot . '/auth/coursetransit/lib.php');
+
+    auth_coursetransit_ensure_source_domain_field();
+
+    return true;
+}

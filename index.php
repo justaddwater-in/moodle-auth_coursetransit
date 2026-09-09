@@ -52,7 +52,7 @@ $created = optional_param('created', 0, PARAM_INT);
 
 $tokenparam = auth_coursetransit_get_temp_token();
 
-$showmodal = ($created && !empty($tokenparam));
+$showmodal = (($created || optional_param('token', 0, PARAM_INT)) && !empty($tokenparam));
 
 // DELETE SITE.
 if ($action === 'delete') {
@@ -62,8 +62,14 @@ if ($action === 'delete') {
 
     $DB->get_record('auth_coursetransit_sites', ['id' => $id], '*', MUST_EXIST);
 
+    $site = $DB->get_record('auth_coursetransit_sites', ['id' => $id], 'id,tokenid', MUST_EXIST);
+
     $DB->delete_records('auth_coursetransit_services', ['siteid' => $id]);
     $DB->delete_records('auth_coursetransit_sites', ['id' => $id]);
+
+    if (!empty($site->tokenid)) {
+        $DB->delete_records('external_tokens', ['id' => $site->tokenid]);
+    }
 
     redirect(
         new moodle_url('/auth/coursetransit/index.php'),
@@ -114,12 +120,12 @@ if ($siteform && $siteform->is_submitted() && $siteform->is_validated()) {
     }
 
     // Create site.
-    auth_coursetransit_create_site(
+    $token = auth_coursetransit_create_site(
         trim($data->name),
         $domain
     );
 
-    auth_coursetransit_set_temp_token(auth_coursetransit_get_existing_token());
+    auth_coursetransit_set_temp_token($token);
     redirect(
         new moodle_url('/auth/coursetransit/index.php', [
             'created' => 1,
@@ -159,6 +165,7 @@ foreach (auth_coursetransit_get_sites() as $site) {
         ['class' => 'btn btn-link p-0'],
         new pix_icon('i/settings', get_string('configure', 'auth_coursetransit'))
     );
+
 
     $sites[] = [
         'name'         => $site->name,

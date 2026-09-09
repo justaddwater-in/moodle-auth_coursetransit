@@ -78,7 +78,7 @@ class execute_action extends external_api {
         string $payload = '{}'
     ): array {
 
-        global $DB;
+        global $DB, $USER;
 
         $starttime = microtime(true);
         $siteid = 0;
@@ -125,67 +125,43 @@ class execute_action extends external_api {
                 );
             }
 
-            // Validate site URL from payload.
-            $siteurl = trim(
-                $payloadarray['siteurl'] ?? ''
+            // Resolve the registered site from the authenticated Moodle web-service token.
+            // The caller-supplied siteurl is never used for authorization.
+            $userid = (int) $USER->id;
+            $requesttoken = optional_param(
+                'wstoken',
+                '',
+                PARAM_ALPHANUMEXT
             );
 
-            if (empty($siteurl)) {
+            if (empty($requesttoken)) {
                 throw new invalid_parameter_exception(
-                    get_string('missingsiteurl', 'auth_coursetransit')
+                    get_string('unauthorizedsite', 'auth_coursetransit')
                 );
             }
 
-            // Normalize URL.
-            if (!preg_match('~^https?://~i', $siteurl)) {
-                $siteurl = 'https://' . $siteurl;
-            }
-
-            $originhost = parse_url(
-                $siteurl,
-                PHP_URL_HOST
+            // Bind the authenticated token to exactly one registered site.
+            // This is the authoritative identity for multi-site installations.
+            $tokenrecord = $DB->get_record(
+                'external_tokens',
+                ['token' => $requesttoken],
+                'id,userid'
             );
 
-            if (!$originhost) {
+            if (!$tokenrecord || (int) $tokenrecord->userid !== $userid) {
                 throw new invalid_parameter_exception(
-                    get_string('invalidsiteurl', 'auth_coursetransit')
+                    get_string('unauthorizedsite', 'auth_coursetransit')
                 );
             }
 
-            $originhost = strtolower(
-                trim($originhost)
-            );
-
-            // Find matching registered site.
-            $site = null;
-
-            $registeredsites = $DB->get_records(
+            $site = $DB->get_record(
                 'auth_coursetransit_sites',
-                ['enabled' => 1]
+                [
+                    'enabled' => 1,
+                    'technicaluserid' => $userid,
+                    'tokenid' => $tokenrecord->id,
+                ]
             );
-
-            foreach ($registeredsites as $registeredsite) {
-                $storeddomain = strtolower(
-                    trim($registeredsite->domain)
-                );
-
-                $allowed =
-                    ($originhost === $storeddomain)
-                    || preg_match(
-                        '/\.' .
-                        preg_quote(
-                            $storeddomain,
-                            '/'
-                        ) .
-                        '$/',
-                        $originhost
-                    );
-
-                if ($allowed) {
-                    $site = $registeredsite;
-                    break;
-                }
-            }
 
             if (!$site) {
                 throw new invalid_parameter_exception(
@@ -194,6 +170,40 @@ class execute_action extends external_api {
             }
 
             $siteid = (int) $site->id;
+
+            // The token is the authoritative site identity. The existing WordPress
+            // siteurl is retained only as a consistency check so a token issued for
+            // Site A cannot be configured on Site B and then used with Site B's URL.
+            // siteurl never selects a site or grants permissions.
+            $claimedsiteurl = trim((string)($payloadarray['siteurl'] ?? ''));
+            $claimedhost = \auth_coursetransit_normalize_site_host($claimedsiteurl);
+            $registeredhost =
+                \auth_coursetransit_normalize_site_host((string)$site->domain);
+
+            if (
+                empty($claimedhost)
+                || empty($registeredhost)
+                || $claimedhost !== $registeredhost
+            ) {
+                throw new invalid_parameter_exception(
+                    get_string('siteurlmismatch', 'auth_coursetransit')
+                );
+            }
+
+            // Siteurl has now served its consistency check and is not forwarded
+            // to the internal Moodle function.
+            unset($payloadarray['siteurl']);
+
+            // Apply function-specific security validation before invoking the
+            // generic Moodle external-function dispatcher. This keeps the
+            // existing WordPress API contract while preventing privileged
+            // parameters such as teacher/manager role IDs from reaching
+            // privileged Moodle functions.
+            \auth_coursetransit_validate_action_payload(
+                $function,
+                $payloadarray,
+                $siteid
+            );
 
             // Check service permission.
             if (
@@ -210,17 +220,23 @@ class execute_action extends external_api {
                 );
             }
 
-            // Remove internal payload fields.
-            unset(
-                $payloadarray['siteurl']
-            );
-
             // Execute internal action.
             $result =
                 \auth_coursetransit_execute_action(
                     $function,
                     $payloadarray
                 );
+
+            // Record the authenticated registered site's domain for users
+            // created by CourseTransit. The domain comes from the token-bound
+            // site record, never from the caller's payload.
+            if ($function === 'core_user_create_users') {
+                \auth_coursetransit_ensure_source_domain_field();
+                \auth_coursetransit_set_created_users_source_domain(
+                    $result,
+                    (string) $site->domain
+                );
+            }
 
             // Log success.
             \auth_coursetransit_log_api_call(
@@ -235,6 +251,7 @@ class execute_action extends external_api {
                 self::execute_returns(),
                 [
                     'success' => true,
+                    'is_pro' => false,
                     'data' => json_encode($result),
                 ]
             );
@@ -256,6 +273,7 @@ class execute_action extends external_api {
                 self::execute_returns(),
                 [
                     'success' => false,
+                    'is_pro' => false,
                     'data' => json_encode([
                         'error' => get_string(
                             'apierror',
@@ -277,18 +295,17 @@ class execute_action extends external_api {
         return new external_single_structure([
             'success' => new external_value(
                 PARAM_BOOL,
-                get_string(
-                    'success',
-                    'auth_coursetransit'
-                )
+                get_string('success', 'auth_coursetransit')
+            ),
+
+            'is_pro' => new external_value(
+                PARAM_BOOL,
+                'is_pro_false',
             ),
 
             'data' => new external_value(
                 PARAM_RAW,
-                get_string(
-                    'responsejson',
-                    'auth_coursetransit'
-                )
+                get_string('responsejson', 'auth_coursetransit')
             ),
         ]);
     }

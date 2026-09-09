@@ -82,30 +82,20 @@ class send_telemetry extends external_api {
 
             $endpoint = 'https://store.justaddwater.in/api/client-info';
 
-            $ch = curl_init();
+            $curl = new \curl();
 
-            curl_setopt_array(
-                $ch,
+            $curl->post(
+                $endpoint,
+                json_encode($payload),
                 [
-                    CURLOPT_URL => $endpoint,
-                    CURLOPT_POST => true,
-                    CURLOPT_RETURNTRANSFER => true,
-                    CURLOPT_TIMEOUT => 10,
-                    CURLOPT_CONNECTTIMEOUT => 5,
-                    CURLOPT_POSTFIELDS => json_encode($payload),
-                    CURLOPT_HTTPHEADER => [
+                    'CURLOPT_TIMEOUT' => 10,
+                    'CURLOPT_CONNECTTIMEOUT' => 5,
+                    'CURLOPT_HTTPHEADER' => [
                         'Content-Type: application/json',
                         'Accept: application/json',
                     ],
-
-                    // Disable SSL verification for local development.
-                    CURLOPT_SSL_VERIFYPEER => false,
-                    CURLOPT_SSL_VERIFYHOST => false,
                 ]
             );
-
-            curl_exec($ch);
-            curl_close($ch);
         }
 
         return [

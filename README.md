@@ -118,3 +118,10 @@ This plugin is not affiliated with or endorsed by Moodle Pty Ltd or the WordPres
 This project is licensed under the GNU General Public License v3.0.
 
 See: https://www.gnu.org/licenses/gpl-3.0.html
+## Security update 0.2.1
+
+This release binds each registered WordPress site to a dedicated Moodle web-service token while keeping the existing `wstoken`, `wsfunction`, and payload request contract unchanged. After the token identifies the registered site, `payload.siteurl` is checked only for an exact host consistency match and is never used to select or grant another site's permissions. A token issued for Site A therefore cannot be configured with Site B's URL and used as Site B.
+
+For existing installations with more than one registered site, the upgrade assigns the existing token to the oldest site and generates unique tokens for the remaining sites. Those sites must update their WordPress connection token once. Use **Sites → Show token** in the CourseTransit dashboard to retrieve the assigned token. Single-site installations continue using their existing token.
+
+The telemetry client also no longer disables TLS certificate verification.

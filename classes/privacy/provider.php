@@ -42,6 +42,7 @@ class provider implements metadata_provider {
             [
                 'name' => 'privacy:metadata:sitename',
                 'domain' => 'privacy:metadata:sitedomain',
+                'technicaluserid' => 'privacy:metadata:technicaluserid',
             ],
             'privacy:metadata:sites'
         );
@@ -67,6 +68,7 @@ class provider implements metadata_provider {
                 'last_name' => 'privacy:metadata:lastname',
                 'email' => 'privacy:metadata:email',
                 'domain' => 'privacy:metadata:sitedomain',
+                'technicaluserid' => 'privacy:metadata:technicaluserid',
                 'company' => 'privacy:metadata:sitename',
                 'plugin_version' => 'privacy:metadata:pluginversion',
                 'platform_version' => 'privacy:metadata:platformversion',
