@@ -75,6 +75,7 @@ $string['tab_token'] = 'Configuration';
 $string['technicalusernotset'] = 'API user is not configured.';
 $string['token'] = 'Web service token';
 $string['unauthorizedsite'] = 'Unauthorized site';
+$string['siteurlmismatch'] = 'The configured WordPress site URL does not match the site assigned to this web-service token.';
 $string['userservices'] = 'User Services';
 $string['wordpresssite'] = 'WordPress Site';
 $string['wizard_continue'] = 'Continue';
@@ -138,6 +139,7 @@ $string['cachedef_session'] = 'Temporary session cache';
 $string['privacy:metadata:sites'] = 'Stores registered WordPress websites connected to Moodle.';
 $string['privacy:metadata:sitename'] = 'The display name of the registered WordPress site.';
 $string['privacy:metadata:sitedomain'] = 'The domain or URL of the registered WordPress site.';
+$string['privacy:metadata:technicaluserid'] = 'The Moodle technical user ID associated with the registered WordPress site.';
 $string['dashboard'] = 'Dashboard';
 $string['configuration'] = 'Configuration';
 $string['summary'] = 'Summary';
@@ -204,3 +206,6 @@ $string['prodevsupporttitle'] = '1 Year Developer Support';
 $string['prodevsupportdesc'] = 'Installation, configuration, and troubleshooting help.';
 $string['propriorityupdatestitle'] = 'Priority Product Updates';
 $string['propriorityupdatesdesc'] = 'Get early access to new features and improvements.';
+
+
+$string['payloadsecurity'] = 'The requested operation contains parameters that are not permitted by CourseTransit security policy.';

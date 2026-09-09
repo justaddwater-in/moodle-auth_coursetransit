@@ -94,14 +94,12 @@ if ($step === 2) {
             throw new moodle_exception('invalidsiteurl', 'auth_coursetransit');
         }
 
-        auth_coursetransit_create_site(
+        $token = auth_coursetransit_create_site(
             trim($data->name),
             strtolower($host)
         );
 
-        auth_coursetransit_set_temp_token(
-            auth_coursetransit_get_existing_token()
-        );
+        auth_coursetransit_set_temp_token($token);
 
         redirect(new moodle_url('/auth/coursetransit/wizard.php', [
             'step' => 3,

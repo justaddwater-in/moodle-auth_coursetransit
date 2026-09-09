@@ -53,17 +53,6 @@ class auth_plugin_coursetransit extends auth_plugin_base {
      * @return bool Authentication success or failure.
      */
     public function user_login($username, $password) {
-        global $CFG, $DB;
-
-        // Validate the login by using the Moodle user table.
-        // Remove if a different authentication method is desired.
-        $user = $DB->get_record('user', ['username' => $username, 'mnethostid' => $CFG->mnet_localhost_id]);
-
-        // User does not exist.
-        if (!$user) {
-            return false;
-        }
-
-        return validate_internal_user_password($user, $password);
+        return false;
     }
 }

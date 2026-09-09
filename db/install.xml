@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <XMLDB PATH="auth/coursetransit/db"
-       VERSION="2026071301"
+       VERSION="2026082400"
        COMMENT="CourseTransit LMS tables"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd">
@@ -13,6 +13,8 @@
         <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
         <FIELD NAME="name" TYPE="char" LENGTH="100" NOTNULL="true"/>
         <FIELD NAME="domain" TYPE="char" LENGTH="255" NOTNULL="true"/>
+        <FIELD NAME="technicaluserid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="tokenid" TYPE="int" LENGTH="10" NOTNULL="false"/>
         <FIELD NAME="enabled" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="1"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true"/>
@@ -21,6 +23,7 @@
       <KEYS>
         <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
         <KEY NAME="domain_unique" TYPE="unique" FIELDS="domain"/>
+        <KEY NAME="token_unique" TYPE="unique" FIELDS="tokenid"/>
       </KEYS>
     </TABLE>
 
