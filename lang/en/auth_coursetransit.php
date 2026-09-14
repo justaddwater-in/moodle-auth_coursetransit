@@ -28,6 +28,7 @@ defined('MOODLE_INTERNAL') || die();
 $string['addsite'] = 'Add Site';
 $string['allowedservices'] = 'Allowed Services';
 $string['apierror'] = 'Request failed. Please contact the administrator.';
+$string['apiuser'] = 'API User';
 $string['apiuser_help'] = 'This user will be used for secure API communication between WordPress and Moodle. It is recommended to select an admin or a dedicated integration user.';
 $string['backtosites'] = 'Back to Sites';
 $string['courseservices'] = 'Course Services';
