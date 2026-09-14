@@ -145,50 +145,70 @@ class execute_action extends external_api {
             $tokenrecord = $DB->get_record(
                 'external_tokens',
                 ['token' => $requesttoken],
-                'id,userid'
+                'id,userid,externalserviceid'
             );
 
-            if (!$tokenrecord || (int) $tokenrecord->userid !== $userid) {
+            if (
+                !$tokenrecord
+                || (int) $tokenrecord->userid !== $userid
+                || !$service
+                || (int) $tokenrecord->externalserviceid !== (int) $service->id
+            ) {
                 throw new invalid_parameter_exception(
                     get_string('unauthorizedsite', 'auth_coursetransit')
                 );
             }
 
-            $site = $DB->get_record(
+            // A legacy token may be shared by multiple registered sites.
+            // Authenticate the token first, then use the registered WordPress
+            // site URL only to select the matching site record.
+            $claimedsiteurl = trim(
+                (string) ($payloadarray['siteurl'] ?? '')
+            );
+            $claimedhost = \auth_coursetransit_normalize_site_host(
+                $claimedsiteurl
+            );
+
+            if (empty($claimedhost)) {
+                throw new invalid_parameter_exception(
+                    get_string('siteurlmismatch', 'auth_coursetransit')
+                );
+            }
+
+            $sites = $DB->get_records(
                 'auth_coursetransit_sites',
                 [
                     'enabled' => 1,
                     'technicaluserid' => $userid,
                     'tokenid' => $tokenrecord->id,
-                ]
+                ],
+                'id ASC'
             );
 
-            if (!$site) {
-                throw new invalid_parameter_exception(
-                    get_string('unauthorizedsite', 'auth_coursetransit')
-                );
+            $site = null;
+
+            foreach ($sites as $candidate) {
+                $registeredhost =
+                    \auth_coursetransit_normalize_site_host(
+                        (string) $candidate->domain
+                    );
+
+                if (
+                    !empty($registeredhost)
+                    && $claimedhost === $registeredhost
+                ) {
+                    $site = $candidate;
+                    break;
+                }
             }
 
-            $siteid = (int) $site->id;
-
-            // The token is the authoritative site identity. The existing WordPress
-            // siteurl is retained only as a consistency check so a token issued for
-            // Site A cannot be configured on Site B and then used with Site B's URL.
-            // siteurl never selects a site or grants permissions.
-            $claimedsiteurl = trim((string)($payloadarray['siteurl'] ?? ''));
-            $claimedhost = \auth_coursetransit_normalize_site_host($claimedsiteurl);
-            $registeredhost =
-                \auth_coursetransit_normalize_site_host((string)$site->domain);
-
-            if (
-                empty($claimedhost)
-                || empty($registeredhost)
-                || $claimedhost !== $registeredhost
-            ) {
+            if (!$site) {
                 throw new invalid_parameter_exception(
                     get_string('siteurlmismatch', 'auth_coursetransit')
                 );
             }
+
+            $siteid = (int) $site->id;
 
             // Siteurl has now served its consistency check and is not forwarded
             // to the internal Moodle function.
