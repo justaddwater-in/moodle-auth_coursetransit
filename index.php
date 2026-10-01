@@ -43,8 +43,8 @@ if (!auth_coursetransit_is_setup_complete()) {
 }
 
 $PAGE->set_url('/auth/coursetransit/index.php');
-$PAGE->set_title(get_string('pluginname', 'auth_coursetransit'));
-$PAGE->set_heading(get_string('pluginname', 'auth_coursetransit'));
+$PAGE->set_title(\auth_coursetransit\local\pro::get_product_name());
+$PAGE->set_heading(\auth_coursetransit\local\pro::get_product_name());
 
 // Params.
 $action = optional_param('action', '', PARAM_ALPHA);

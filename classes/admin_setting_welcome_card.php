@@ -46,6 +46,18 @@ class admin_setting_welcome_card extends \admin_setting {
      * @return mixed
      */
     public function get_setting() {
+        // Moodle treats a NULL setting value as a new/uninitialised setting
+        // and can therefore show it again whenever any plugin is installed
+        // or upgraded. CourseTransit setup completion is the real source of
+        // truth, so once the wizard is complete always return a non-NULL
+        // value. This prevents the wizard card from reappearing on future
+        // plugin install/upgrade "New settings" pages.
+        if (auth_coursetransit_is_setup_complete()) {
+            return 1;
+        }
+
+        // Keep it NULL/uninitialised while setup is incomplete so Moodle can
+        // surface the setup wizard to the administrator.
         return $this->config_read($this->name);
     }
 

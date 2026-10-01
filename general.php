@@ -45,8 +45,8 @@ global $CFG, $DB, $OUTPUT, $PAGE;
 
 // Page setup.
 $PAGE->set_url('/auth/coursetransit/general.php');
-$PAGE->set_title(get_string('pluginname', 'auth_coursetransit'));
-$PAGE->set_heading(get_string('pluginname', 'auth_coursetransit'));
+$PAGE->set_title(\auth_coursetransit\local\pro::get_product_name());
+$PAGE->set_heading(\auth_coursetransit\local\pro::get_product_name());
 
 // Current REST protocols.
 $protocols = explode(

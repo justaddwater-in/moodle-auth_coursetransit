@@ -191,9 +191,14 @@ $string['infocollected_moodle'] = 'Moodle Version';
 $string['infocollected_php'] = 'PHP Version';
 $string['infocollected_plugin'] = 'Plugin Version';
 $string['tabpro'] = 'Upgrade to Pro';
-$string['propage_title'] = 'CourseTransit Pro Features';
-$string['coursetransitpro'] = 'CourseTransit Pro';
 $string['unlockadvancedintegration'] = 'Unlock Advanced Integration';
+$string['everythinginfreeplus'] = 'Everything in free, plus';
+
+
+$string['payloadsecurity'] = 'The requested operation contains parameters that are not permitted by CourseTransit security policy.';
+$string['profeaturestitle'] = 'CourseTransit Pro Features';
+$string['coursetransitpro'] = 'CourseTransit Pro';
+$string['propage_title'] = 'CourseTransit Pro Features';
 $string['prohero_desc'] = 'Automate course syncing, manage multiple WordPress sites seamlessly, and provide a frictionless single sign-on experience.';
 $string['upgradenow'] = 'Upgrade Now';
 $string['everythinginfreeplus'] = 'Everything in free, plus';
@@ -207,6 +212,4 @@ $string['prodevsupporttitle'] = '1 Year Developer Support';
 $string['prodevsupportdesc'] = 'Installation, configuration, and troubleshooting help.';
 $string['propriorityupdatestitle'] = 'Priority Product Updates';
 $string['propriorityupdatesdesc'] = 'Get early access to new features and improvements.';
-
-
 $string['payloadsecurity'] = 'The requested operation contains parameters that are not permitted by CourseTransit security policy.';

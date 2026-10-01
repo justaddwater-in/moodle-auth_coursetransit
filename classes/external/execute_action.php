@@ -142,6 +142,16 @@ class execute_action extends external_api {
 
             // Bind the authenticated token to exactly one registered site.
             // This is the authoritative identity for multi-site installations.
+            //
+            // The token must belong to the CourseTransit external service as
+            // well as to the technical user: a token issued to the same user
+            // for a DIFFERENT service must not be accepted here.
+            $service = $DB->get_record(
+                'external_services',
+                ['shortname' => 'auth_coursetransit'],
+                'id'
+            );
+
             $tokenrecord = $DB->get_record(
                 'external_tokens',
                 ['token' => $requesttoken],
@@ -149,9 +159,9 @@ class execute_action extends external_api {
             );
 
             if (
-                !$tokenrecord
+                !$service
+                || !$tokenrecord
                 || (int) $tokenrecord->userid !== $userid
-                || !$service
                 || (int) $tokenrecord->externalserviceid !== (int) $service->id
             ) {
                 throw new invalid_parameter_exception(
@@ -159,56 +169,41 @@ class execute_action extends external_api {
                 );
             }
 
-            // A legacy token may be shared by multiple registered sites.
-            // Authenticate the token first, then use the registered WordPress
-            // site URL only to select the matching site record.
-            $claimedsiteurl = trim(
-                (string) ($payloadarray['siteurl'] ?? '')
-            );
-            $claimedhost = \auth_coursetransit_normalize_site_host(
-                $claimedsiteurl
-            );
-
-            if (empty($claimedhost)) {
-                throw new invalid_parameter_exception(
-                    get_string('siteurlmismatch', 'auth_coursetransit')
-                );
-            }
-
-            $sites = $DB->get_records(
+            $site = $DB->get_record(
                 'auth_coursetransit_sites',
                 [
                     'enabled' => 1,
                     'technicaluserid' => $userid,
                     'tokenid' => $tokenrecord->id,
-                ],
-                'id ASC'
+                ]
             );
-
-            $site = null;
-
-            foreach ($sites as $candidate) {
-                $registeredhost =
-                    \auth_coursetransit_normalize_site_host(
-                        (string) $candidate->domain
-                    );
-
-                if (
-                    !empty($registeredhost)
-                    && $claimedhost === $registeredhost
-                ) {
-                    $site = $candidate;
-                    break;
-                }
-            }
 
             if (!$site) {
                 throw new invalid_parameter_exception(
-                    get_string('siteurlmismatch', 'auth_coursetransit')
+                    get_string('unauthorizedsite', 'auth_coursetransit')
                 );
             }
 
             $siteid = (int) $site->id;
+
+            // The token is the authoritative site identity. The existing WordPress
+            // siteurl is retained only as a consistency check so a token issued for
+            // Site A cannot be configured on Site B and then used with Site B's URL.
+            // siteurl never selects a site or grants permissions.
+            $claimedsiteurl = trim((string)($payloadarray['siteurl'] ?? ''));
+            $claimedhost = \auth_coursetransit_normalize_site_host($claimedsiteurl);
+            $registeredhost =
+                \auth_coursetransit_normalize_site_host((string)$site->domain);
+
+            if (
+                empty($claimedhost)
+                || empty($registeredhost)
+                || $claimedhost !== $registeredhost
+            ) {
+                throw new invalid_parameter_exception(
+                    get_string('siteurlmismatch', 'auth_coursetransit')
+                );
+            }
 
             // Siteurl has now served its consistency check and is not forwarded
             // to the internal Moodle function.
@@ -246,6 +241,17 @@ class execute_action extends external_api {
                     $function,
                     $payloadarray
                 );
+
+            // Moodle 4.1 can return overview-file URLs without the token
+            // required by webservice/pluginfile.php. Keep the existing
+            // CourseTransit API response intact and only add the token to
+            // the file URLs returned by the course API.
+            if ($function === 'core_course_get_courses_by_field') {
+                $result = \auth_coursetransit_add_file_tokens(
+                    $result,
+                    $requesttoken
+                );
+            }
 
             // Record the authenticated registered site's domain for users
             // created by CourseTransit. The domain comes from the token-bound
