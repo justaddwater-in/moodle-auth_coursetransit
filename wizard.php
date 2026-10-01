@@ -39,11 +39,11 @@ if (get_config('auth_coursetransit', 'setup_complete') && $step !== 3) {
 }
 
 global $OUTPUT, $PAGE;
-
 $PAGE->set_context(context_system::instance());
+
 $PAGE->set_url('/auth/coursetransit/wizard.php', ['step' => $step]);
-$PAGE->set_title(get_string('pluginname', 'auth_coursetransit'));
-$PAGE->set_heading(get_string('pluginname', 'auth_coursetransit'));
+$PAGE->set_title(\auth_coursetransit\local\pro::get_product_name());
+$PAGE->set_heading(\auth_coursetransit\local\pro::get_product_name());
 
 echo $OUTPUT->header();
 

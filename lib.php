@@ -60,6 +60,7 @@ function auth_coursetransit_auto_create_webservice(): string {
                 'auth_coursetransit',
             'enabled' => 1,
             'restrictedusers' => 1,
+            'downloadfiles' => 1,
             'timecreated' => time(),
         ];
 
@@ -78,16 +79,32 @@ function auth_coursetransit_auto_create_webservice(): string {
         $service->enabled = 1;
         $service->restrictedusers = 1;
 
+        // Course images are served through webservice/pluginfile.php.
+        // Moodle 4.1 requires file downloads to be enabled on the
+        // external service used by the authenticated CourseTransit token.
+        $service->downloadfiles = 1;
+
         $DB->update_record(
             'external_services',
             $service
         );
     }
 
-    // CRITICAL: Ensure ALL supported functions are enabled ONCE.
-    auth_coursetransit_update_services([
+    // Ensure the Free function is enabled. If the Pro add-on is installed,
+    // preserve its functions on the shared CourseTransit service.
+    $servicefunctions = [
         'auth_coursetransit_execute_action',
-    ]);
+    ];
+
+    if (
+        class_exists('auth_coursetransitpro\\external\\pro')
+        && get_config('auth_coursetransitpro', 'version')
+    ) {
+        $servicefunctions[] = 'auth_coursetransitpro_generate_sso_login';
+        $servicefunctions[] = 'auth_coursetransitpro_pro';
+    }
+
+    auth_coursetransit_update_services($servicefunctions);
 
     // Technical user.
     $userid = (int) get_config('auth_coursetransit', 'technicaluserid');
@@ -239,6 +256,13 @@ function auth_coursetransit_update_services(array $functions): void {
     $allowed = [
         'auth_coursetransit_execute_action',
     ];
+
+    if (
+        get_config('auth_coursetransitpro', 'version')
+    ) {
+        $allowed[] = 'auth_coursetransitpro_generate_sso_login';
+        $allowed[] = 'auth_coursetransitpro_pro';
+    }
 
     $functions = array_intersect(
         $functions,
@@ -1005,6 +1029,57 @@ function auth_coursetransit_validate_action_payload(
             // Moodle's own external-function parameter validation.
             break;
     }
+}
+
+/**
+ * Add the authenticated CourseTransit token to webservice file URLs.
+ *
+ * Moodle 4.1 can return course overview-file URLs through
+ * webservice/pluginfile.php without the token required by that endpoint.
+ * WordPress needs the returned URL to be directly downloadable, so only
+ * CourseTransit webservice file URLs are adjusted here.
+ *
+ * @param array $data Course API response.
+ * @param string $token Authenticated CourseTransit token.
+ * @return array
+ */
+function auth_coursetransit_add_file_tokens(
+    array $data,
+    string $token
+): array {
+    if (empty($data['courses']) || empty($token)) {
+        return $data;
+    }
+
+    foreach ($data['courses'] as &$course) {
+        if (empty($course['overviewfiles'])) {
+            continue;
+        }
+
+        foreach ($course['overviewfiles'] as &$file) {
+            if (empty($file['fileurl'])) {
+                continue;
+            }
+
+            $url = new moodle_url($file['fileurl']);
+            $path = $url->get_path();
+
+            if (strpos($path, '/webservice/pluginfile.php') === false) {
+                continue;
+            }
+
+            if ($url->get_param('token')) {
+                continue;
+            }
+
+            $url->param('token', $token);
+            $file['fileurl'] = $url->out(false);
+        }
+    }
+
+    unset($file, $course);
+
+    return $data;
 }
 
 /**

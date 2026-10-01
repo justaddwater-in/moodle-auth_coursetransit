@@ -19,8 +19,7 @@
  *
  * @package    auth_coursetransit
  * @copyright  2025 Justaddwater
- * @author     Himanshu Saini
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @license    https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 require_once(__DIR__ . '/../../config.php');
@@ -29,27 +28,19 @@ require_once(__DIR__ . '/lib.php');
 
 use auth_coursetransit\output\tabs;
 
-// Security.
 admin_externalpage_setup('auth_coursetransit');
 
 require_login();
+require_capability('moodle/site:config', context_system::instance());
 
-require_capability(
-    'moodle/site:config',
-    context_system::instance()
-);
+global $OUTPUT, $PAGE;
 
-global $CFG, $OUTPUT, $PAGE;
-
-// Page setup.
 $PAGE->set_url('/auth/coursetransit/pro.php');
 $PAGE->set_title(get_string('propage_title', 'auth_coursetransit'));
 $PAGE->set_heading(get_string('propage_title', 'auth_coursetransit'));
 
-// Render page.
 echo $OUTPUT->header();
 
-// Tabs.
 echo $OUTPUT->render_from_template(
     'auth_coursetransit/tabs',
     [
@@ -57,9 +48,9 @@ echo $OUTPUT->render_from_template(
     ]
 );
 
-// Pro Page Content.
 $contextdata = [
     'buy_pro_url' => 'https://justaddwater.in/products/coursetransit-wordpress-moodle-integration/#pricing',
+    'coursetransitpro' => get_string('coursetransitpro', 'auth_coursetransit'),
 ];
 
 echo $OUTPUT->render_from_template('auth_coursetransit/pro', $contextdata);

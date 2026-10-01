@@ -151,22 +151,15 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
             $dbman->add_field($table, $field);
         }
 
-        // Existing installations historically used one technical user/token.
-        // Multiple legacy sites must continue to reference that same token.
         $key = new xmldb_key('token_unique', XMLDB_KEY_UNIQUE, ['tokenid']);
-        if ($dbman->find_key_name($table, $key)) {
-            $dbman->drop_key($table, $key);
+        if (!$dbman->find_key_name($table, $key)) {
+            $dbman->add_key($table, $key);
         }
 
-        $index = new xmldb_index(
-            'tokenid_idx',
-            XMLDB_INDEX_NOTUNIQUE,
-            ['tokenid']
-        );
-        if (!$dbman->find_index_name($table, $index)) {
-            $dbman->add_index($table, $index);
-        }
-
+        // Existing installations historically used one technical user/token.
+        // Preserve that token for the oldest registered site where possible and
+        // issue unique tokens for additional sites. This keeps single-site
+        // installations working without trusting payload['siteurl'].
         $userid = (int) get_config('auth_coursetransit', 'technicaluserid');
         $service = $DB->get_record('external_services', ['shortname' => 'auth_coursetransit']);
 
@@ -174,60 +167,45 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
             require_once($CFG->dirroot . '/webservice/lib.php');
             require_once($CFG->libdir . '/externallib.php');
 
-            // Retrieve the existing legacy token once. Older CourseTransit versions
-            // used one permanent token for the technical user and all registered sites.
+            $sites = $DB->get_records('auth_coursetransit_sites', null, 'timecreated ASC, id ASC');
             $tokens = $DB->get_records(
                 'external_tokens',
                 [
                     'externalserviceid' => $service->id,
                     'userid' => $userid,
                 ],
-                'timecreated ASC, id ASC',
+                'id ASC',
                 'id,token'
             );
 
-            $tokenrecord = reset($tokens);
-
-            if (!$tokenrecord) {
-                $token = external_generate_token(
-                    EXTERNAL_TOKEN_PERMANENT,
-                    $service->id,
-                    $userid,
-                    context_system::instance()
-                );
-
-                $tokenrecord = $DB->get_record(
-                    'external_tokens',
-                    [
-                        'token' => $token,
-                        'externalserviceid' => $service->id,
-                        'userid' => $userid,
-                    ],
-                    'id,token',
-                    MUST_EXIST
-                );
-            }
-
-            $sites = $DB->get_records(
-                'auth_coursetransit_sites',
-                null,
-                'timecreated ASC, id ASC'
-            );
+            $tokenrecords = array_values($tokens);
+            $tokenindex = 0;
 
             foreach ($sites as $site) {
-                $DB->set_field(
-                    'auth_coursetransit_sites',
-                    'technicaluserid',
-                    $userid,
-                    ['id' => $site->id]
-                );
+                if (!empty($site->tokenid)) {
+                    continue;
+                }
 
-                $DB->set_field(
-                    'auth_coursetransit_sites',
-                    'tokenid',
-                    $tokenrecord->id,
-                    ['id' => $site->id]
-                );
+                $tokenrecord = $tokenrecords[$tokenindex] ?? null;
+                if (!$tokenrecord) {
+                    $token = external_generate_token(
+                        EXTERNAL_TOKEN_PERMANENT,
+                        $service->id,
+                        $userid,
+                        context_system::instance()
+                    );
+                    $tokenrecord = $DB->get_record(
+                        'external_tokens',
+                        ['token' => $token],
+                        'id,token',
+                        MUST_EXIST
+                    );
+                    $tokenrecords[] = $tokenrecord;
+                }
+
+                $DB->set_field('auth_coursetransit_sites', 'technicaluserid', $userid, ['id' => $site->id]);
+                $DB->set_field('auth_coursetransit_sites', 'tokenid', $tokenrecord->id, ['id' => $site->id]);
+                $tokenindex++;
             }
         }
 
@@ -300,102 +278,65 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026083101, 'auth', 'coursetransit');
     }
 
-    // Repair installations that already ran the per-site token migration.
-    // Restore the original shared token for sites that existed before the first
-    // per-site token was generated, while leaving later sites on their own tokens.
-    if ($oldversion < 2026090301) {
-        $table = new xmldb_table('auth_coursetransit_sites');
+    // Clean up after the retired all-in-one "Pro" build, which shipped Pro
+    // code under this same component (auth_coursetransit) up to version
+    // 2026090801. Sites upgrading from that build still have its web service
+    // functions registered against the CourseTransit external service, but
+    // the classes behind them no longer exist here — they moved to the
+    // separate local_coursetransitpro component. Leaving the registrations in
+    // place makes Moodle complain about missing external functions.
+    //
+    // Pro configuration and licence state are deliberately NOT removed: if the
+    // admin installs local_coursetransitpro, that plugin can still read them.
+    if ($oldversion < 2026091600) {
+        $service = $DB->get_record(
+            'external_services',
+            ['shortname' => 'auth_coursetransit'],
+            'id'
+        );
 
-        if ($dbman->table_exists($table)) {
-            $key = new xmldb_key(
-                'token_unique',
-                XMLDB_KEY_UNIQUE,
-                ['tokenid']
-            );
-
-            if ($dbman->find_key_name($table, $key)) {
-                $dbman->drop_key($table, $key);
-            }
-
-            $index = new xmldb_index(
-                'tokenid_idx',
-                XMLDB_INDEX_NOTUNIQUE,
-                ['tokenid']
-            );
-
-            if (!$dbman->find_index_name($table, $index)) {
-                $dbman->add_index($table, $index);
-            }
-
-            $userid = (int) get_config(
-                'auth_coursetransit',
-                'technicaluserid'
-            );
-
-            $service = $DB->get_record(
-                'external_services',
-                ['shortname' => 'auth_coursetransit'],
-                'id'
-            );
-
-            if ($userid && $service) {
-                $tokens = $DB->get_records(
-                    'external_tokens',
-                    [
-                        'externalserviceid' => $service->id,
-                        'userid' => $userid,
-                    ],
-                    'timecreated ASC, id ASC',
-                    'id,token,timecreated'
-                );
-
-                $tokenlist = array_values($tokens);
-                $legacytoken = $tokenlist[0] ?? null;
-                $firstnewtoken = $tokenlist[1] ?? null;
-
-                if ($legacytoken) {
-                    if ($firstnewtoken) {
-                        $sites = $DB->get_records_select(
-                            'auth_coursetransit_sites',
-                            'timecreated < :tokencreated',
-                            [
-                                'tokencreated' => $firstnewtoken->timecreated,
-                            ],
-                            'timecreated ASC, id ASC'
-                        );
-                    } else {
-                        $sites = $DB->get_records(
-                            'auth_coursetransit_sites',
-                            null,
-                            'timecreated ASC, id ASC'
-                        );
-                    }
-
-                    foreach ($sites as $site) {
-                        $DB->set_field(
-                            'auth_coursetransit_sites',
-                            'technicaluserid',
-                            $userid,
-                            ['id' => $site->id]
-                        );
-
-                        $DB->set_field(
-                            'auth_coursetransit_sites',
-                            'tokenid',
-                            $legacytoken->id,
-                            ['id' => $site->id]
-                        );
-                    }
-                }
+        if ($service) {
+            foreach (
+                [
+                    'auth_coursetransit_generate_sso_login',
+                    'auth_coursetransit_pro',
+                ] as $retiredfunction
+            ) {
+                $DB->delete_records('external_services_functions', [
+                    'externalserviceid' => $service->id,
+                    'functionname' => $retiredfunction,
+                ]);
             }
         }
 
-        upgrade_plugin_savepoint(
-            true,
-            2026090301,
-            'auth',
-            'coursetransit'
+        upgrade_plugin_savepoint(true, 2026091600, 'auth', 'coursetransit');
+    }
+
+    if ($oldversion < 2026092203) {
+        upgrade_plugin_savepoint(true, 2026092203, 'auth', 'coursetransit');
+    }
+
+    // Allow CourseTransit webservice tokens to download Moodle files.
+    // Moodle 4.1's webservice/pluginfile.php checks this service-level flag
+    // before serving course overview images. Existing services therefore need
+    // this value enabled during upgrade as well as on fresh installation.
+    if ($oldversion < 2026100101) {
+        $service = $DB->get_record(
+            'external_services',
+            ['shortname' => 'auth_coursetransit'],
+            'id'
         );
+
+        if ($service) {
+            $DB->set_field(
+                'external_services',
+                'downloadfiles',
+                1,
+                ['id' => $service->id]
+            );
+        }
+
+        upgrade_plugin_savepoint(true, 2026100101, 'auth', 'coursetransit');
     }
 
     return true;

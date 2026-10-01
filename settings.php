@@ -31,7 +31,7 @@ if ($hassiteconfig) {
     // Add under Authentication section.
     $ADMIN->add('authsettings', new admin_externalpage(
         'auth_coursetransit', // MUST match admin_externalpage_setup().
-        get_string('pluginname', 'auth_coursetransit'),
+        \auth_coursetransit\local\pro::get_product_name(),
         new moodle_url('/auth/coursetransit/index.php')
     ));
 
