@@ -26,7 +26,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'auth_coursetransit';
-$plugin->release = '2.0.0';
+$plugin->release = '2.0.1';
 $plugin->version = 2026100101;
 $plugin->requires = 2022112800; // Moodle 4.1.0.
 $plugin->maturity = MATURITY_STABLE;
@@ -34,7 +34,7 @@ $plugin->maturity = MATURITY_STABLE;
 /*
  * VERSION NOTE
  * ------------
- * 2026091600 is deliberately higher than 2026090801, the last all-in-one
+ * 2026100101 is deliberately higher than 2026090801, the last all-in-one
  * "Pro" build that also shipped as component auth_coursetransit. Sites still
  * running that build can therefore upgrade to this free plugin; Moodle would
  * refuse a lower number as a downgrade.

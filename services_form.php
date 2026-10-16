@@ -59,6 +59,8 @@ class auth_coursetransit_services_form extends moodleform {
             'core_course_get_courses_by_field',
             'core_course_get_categories',
             'core_course_get_contents',
+            'core_completion_get_activities_completion_status',
+            'core_completion_get_course_completion_status',
         ], $supported, $enabled);
 
         // Enrolment services.

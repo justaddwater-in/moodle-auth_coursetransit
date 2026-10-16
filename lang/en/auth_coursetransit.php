@@ -213,3 +213,5 @@ $string['prodevsupportdesc'] = 'Installation, configuration, and troubleshooting
 $string['propriorityupdatestitle'] = 'Priority Product Updates';
 $string['propriorityupdatesdesc'] = 'Get early access to new features and improvements.';
 $string['payloadsecurity'] = 'The requested operation contains parameters that are not permitted by CourseTransit security policy.';
+$string['service_getactivitiescompletionstatus'] = 'Get activities completion status';
+$string['service_getcoursecompletionstatus'] = 'Get course completion status';
