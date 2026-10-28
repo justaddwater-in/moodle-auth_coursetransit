@@ -33,6 +33,7 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
     global $DB, $CFG;
 
     require_once($CFG->libdir . '/ddllib.php');
+    require_once($CFG->dirroot . '/auth/coursetransit/lib.php');
 
     $dbman = $DB->get_manager();
 
@@ -188,9 +189,9 @@ function xmldb_auth_coursetransit_upgrade($oldversion) {
 
                 $tokenrecord = $tokenrecords[$tokenindex] ?? null;
                 if (!$tokenrecord) {
-                    $token = external_generate_token(
+                    $token = auth_coursetransit_generate_token(
                         EXTERNAL_TOKEN_PERMANENT,
-                        $service->id,
+                        $service,
                         $userid,
                         context_system::instance()
                     );
