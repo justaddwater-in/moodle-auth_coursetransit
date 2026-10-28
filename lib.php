@@ -24,6 +24,44 @@
  */
 
 /**
+ * Generate a web-service token using the API available in this Moodle version.
+ *
+ * Moodle 4.4 deprecated external_generate_token() in favour of
+ * core_external\util::generate_token(). Keep the legacy fallback for Moodle
+ * versions before the namespaced API was introduced, preserving the plugin's
+ * Moodle 4.1 minimum requirement.
+ *
+ * @param int $tokentype Token type.
+ * @param stdClass $service External service record.
+ * @param int $userid User ID.
+ * @param context $context Token context.
+ * @return string Generated token.
+ */
+function auth_coursetransit_generate_token(
+    int $tokentype,
+    stdClass $service,
+    int $userid,
+    context $context
+): string {
+    if (class_exists('\\core_external\\util')) {
+        return \core_external\util::generate_token(
+            $tokentype,
+            $service,
+            $userid,
+            $context
+        );
+    }
+
+    // Moodle 4.1 compatibility. This branch is not used on Moodle 4.4+.
+    return external_generate_token(
+        $tokentype,
+        $service->id,
+        $userid,
+        $context
+    );
+}
+
+/**
  * Minimal LMSACE-style webservice + token creation.
  *
  * @return string Generated or existing token
@@ -133,9 +171,9 @@ function auth_coursetransit_auto_create_webservice(): string {
         return $token->token;
     }
 
-    return external_generate_token(
+    return auth_coursetransit_generate_token(
         EXTERNAL_TOKEN_PERMANENT,
-        $service->id,
+        $service,
         $userid,
         context_system::instance()
     );
@@ -366,9 +404,9 @@ function auth_coursetransit_create_site(string $name, string $domain): string {
     ]);
 
     // Every registered website gets its own permanent Moodle web-service token.
-    $token = external_generate_token(
+    $token = auth_coursetransit_generate_token(
         EXTERNAL_TOKEN_PERMANENT,
-        $service->id,
+        $service,
         $userid,
         context_system::instance()
     );
@@ -1044,10 +1082,19 @@ function auth_coursetransit_execute_action(
 
     require_once($CFG->libdir . '/externallib.php');
 
-    $response = external_api::call_external_function(
-        $function,
-        $payload
-    );
+    // Use the namespaced API on newer Moodle versions while retaining the
+    // legacy entry point required by older supported Moodle releases.
+    if (class_exists('\\core_external\\external_api')) {
+        $response = \core_external\external_api::call_external_function(
+            $function,
+            $payload
+        );
+    } else {
+        $response = external_api::call_external_function(
+            $function,
+            $payload
+        );
+    }
 
     if (!empty($response['error'])) {
         throw new moodle_exception(
@@ -1198,4 +1245,91 @@ function auth_coursetransit_get_temp_token(): string {
     );
 
     return $token;
+}
+
+
+if (!function_exists('auth_coursetransit_add_file_tokens')) {
+    /**
+     * Add the authenticated web-service token to Moodle plugin-file URLs returned
+     * by core_course_get_courses_by_field.
+     *
+     * Moodle 4.1 may return overview-file URLs that do not include the token.
+     * Only Moodle pluginfile URLs are changed; all other response data is kept
+     * intact. The caller passes the token already authenticated for this request.
+     *
+     * @param mixed $result Course API result.
+     * @param string $token Authenticated Moodle web-service token.
+     * @return mixed
+     */
+    function auth_coursetransit_add_file_tokens($result, $token) {
+        if (!is_array($result) || $token === '') {
+            return $result;
+        }
+
+        $addtoken = static function ($url) use ($token) {
+            if (!is_string($url) || $url === '') {
+                return $url;
+            }
+
+            $parts = parse_url($url);
+            if ($parts === false || empty($parts['path'])) {
+                return $url;
+            }
+
+            // Do not add credentials to arbitrary external URLs.
+            if (strpos($parts['path'], '/pluginfile.php/') === false) {
+                return $url;
+            }
+
+            $query = [];
+            if (!empty($parts['query'])) {
+                parse_str($parts['query'], $query);
+            }
+            if (!isset($query['token']) || $query['token'] === '') {
+                $query['token'] = $token;
+            }
+
+            $rebuilt = '';
+            if (isset($parts['scheme'])) {
+                $rebuilt .= $parts['scheme'] . '://';
+            }
+            if (isset($parts['user'])) {
+                $rebuilt .= $parts['user'];
+                if (isset($parts['pass'])) {
+                    $rebuilt .= ':' . $parts['pass'];
+                }
+                $rebuilt .= '@';
+            }
+            if (isset($parts['host'])) {
+                $rebuilt .= $parts['host'];
+            }
+            if (isset($parts['port'])) {
+                $rebuilt .= ':' . $parts['port'];
+            }
+            $rebuilt .= $parts['path'];
+            $rebuilt .= '?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+            if (isset($parts['fragment'])) {
+                $rebuilt .= '#' . $parts['fragment'];
+            }
+            return $rebuilt;
+        };
+
+        $walk = function (&$value) use (&$walk, $addtoken) {
+            if (!is_array($value)) {
+                return;
+            }
+
+            foreach ($value as $key => &$item) {
+                if (in_array($key, ['fileurl', 'courseimage'], true) && is_string($item)) {
+                    $item = $addtoken($item);
+                } else if (is_array($item)) {
+                    $walk($item);
+                }
+            }
+            unset($item);
+        };
+
+        $walk($result);
+        return $result;
+    }
 }
