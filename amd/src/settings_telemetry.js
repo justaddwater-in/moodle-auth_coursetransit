@@ -7,11 +7,11 @@
 //
 // Moodle is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle. If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * JS for telemetry opt-in handling in CourseTransit settings.
@@ -23,7 +23,6 @@
  */
 define(['core/ajax'], function(Ajax) {
     return {
-        // Accept the wizardUrl passed from the PHP class
         init: function(wizardUrl) {
             const launchBtn = document.getElementById('launch-wizard-btn');
 
@@ -31,37 +30,24 @@ define(['core/ajax'], function(Ajax) {
                 return;
             }
 
-            // Listen for a click on the anchor tag, not a form submission
             launchBtn.addEventListener('click', function(e) {
-                e.preventDefault(); // Stop immediate redirection
-
-                // Disable button to prevent double-clicks
+                e.preventDefault();
                 launchBtn.classList.add('disabled');
                 launchBtn.style.pointerEvents = 'none';
                 launchBtn.innerHTML = 'Loading...';
 
-                // Read checkbox state using its specific ID
                 const checkbox = document.getElementById('coursetransit-telemetry-optin');
+                const hasOptedIn = Boolean(checkbox && checkbox.checked);
 
-                let hasOptedIn = false;
-                if (checkbox && checkbox.checked) {
-                    hasOptedIn = true;
-                }
-
-                // Fire the Moodle AJAX request
                 Ajax.call([{
                     methodname: 'auth_coursetransit_send_telemetry',
-                    args: {
-                        optin: hasOptedIn
-                    }
-                }])[0].then(function() {
-                    // Redirect to the wizard on success
+                    args: {optin: hasOptedIn}
+                }])[0].then(function(response) {
                     window.location.href = wizardUrl;
-                    return true;
+                    return response;
                 }).catch(function() {
-                    // Still redirect to the wizard if the network fails
                     window.location.href = wizardUrl;
-                    return false;
+                    return null;
                 });
             });
         }
