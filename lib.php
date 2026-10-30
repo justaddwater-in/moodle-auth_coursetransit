@@ -161,30 +161,43 @@ function auth_coursetransit_auto_create_webservice(): string {
         ]);
     }
 
-    // Token reuse.
-    if (
-        $token = $DB->get_record('external_tokens', [
-            'externalserviceid' => $service->id,
-            'userid' => $userid,
-        ])
-    ) {
-        return $token->token;
-    }
-
-    return auth_coursetransit_generate_token(
-        EXTERNAL_TOKEN_PERMANENT,
-        $service,
-        $userid,
-        context_system::instance()
-    );
+    // Site-specific tokens are created by auth_coursetransit_create_site().
+    // Do not create an unbound token here: that would create another token for
+    // the same service/user and make single-record lookups fail when multiple
+    // WordPress sites are registered. Callers use this function for setup only.
+    return '';
 }
 
 /**
- * Get existing webservice token WITHOUT creating one.
+ * Get an existing CourseTransit web-service token without creating one.
+ *
+ * Prefer a token explicitly linked to a registered site. Multiple tokens for
+ * the same Moodle service/user are valid because each registered site receives
+ * its own token, so this function must not use get_record() for that lookup.
+ *
+ * @return string
  */
 function auth_coursetransit_get_existing_token(): string {
     global $DB;
 
+    // The site's tokenid is the authoritative relationship for site-specific tokens.
+    $tokens = $DB->get_records_sql(
+        'SELECT t.id, t.token
+           FROM {auth_coursetransit_sites} s
+           JOIN {external_tokens} t ON t.id = s.tokenid
+          ORDER BY s.timecreated DESC, s.id DESC',
+        [],
+        0,
+        1
+    );
+
+    if ($tokens) {
+        $token = reset($tokens);
+        return (string) $token->token;
+    }
+
+    // Backward compatibility for installations created before tokens were
+    // linked to sites, or where the site table does not yet contain a tokenid.
     $service = $DB->get_record('external_services', [
         'shortname' => 'auth_coursetransit',
     ]);
@@ -198,13 +211,21 @@ function auth_coursetransit_get_existing_token(): string {
         return '';
     }
 
-    if (
-        $token = $DB->get_record('external_tokens', [
+    $tokens = $DB->get_records(
+        'external_tokens',
+        [
             'externalserviceid' => $service->id,
             'userid' => $userid,
-        ])
-    ) {
-        return $token->token;
+        ],
+        'id ASC',
+        'id, token',
+        0,
+        1
+    );
+
+    if ($tokens) {
+        $token = reset($tokens);
+        return (string) $token->token;
     }
 
     return '';
